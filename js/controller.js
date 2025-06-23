@@ -407,6 +407,16 @@ const Controller = {
         this.renderCart(); // Update totals
     },
 
+    // Reset products to default menu
+    resetProducts() {
+        if (View.showConfirm('This will replace all current products with the default menu (28 items). Continue?')) {
+            Model.resetToDefaultProducts();
+            View.showAlert('Products reset to default menu successfully!', 'success');
+            this.loadProducts();
+            this.loadProductsToPOS();
+        }
+    },
+
     // ========================================
     // 7. USER MANAGEMENT
     // ========================================
