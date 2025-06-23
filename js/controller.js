@@ -231,12 +231,41 @@ const Controller = {
     // 1️⃣1️⃣ Load Products to POS
     loadProductsToPOS() {
         const products = Model.getAllProducts();
+        const categories = Model.getCategories();
         View.renderProductsGrid(products);
+        View.renderPOSCategoryFilters(categories);
+        this.currentPOSCategory = 'All';
+    },
+
+    // Filter POS by Category
+    filterPOSByCategory(category) {
+        this.currentPOSCategory = category;
+        const searchQuery = document.getElementById('posSearch')?.value || '';
+        
+        let products = Model.filterByCategory(category);
+        
+        // Apply search filter if there's a search query
+        if (searchQuery) {
+            products = products.filter(p => 
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        
+        View.renderProductsGrid(products);
+        View.renderPOSCategoryFilters(Model.getCategories(), category);
     },
 
     // Search in POS
     searchProductsInPOS(query) {
-        const products = Model.searchProducts(query);
+        const category = this.currentPOSCategory || 'All';
+        let products = Model.filterByCategory(category);
+        
+        if (query) {
+            products = products.filter(p => 
+                p.name.toLowerCase().includes(query.toLowerCase())
+            );
+        }
+        
         View.renderProductsGrid(products);
     },
 

@@ -60,6 +60,33 @@ const View = {
         `).join('');
     },
 
+    // Render POS Category Filters
+    renderPOSCategoryFilters(categories, selectedCategory = 'All') {
+        const container = document.getElementById('categoryFilters');
+        if (!container) return;
+
+        container.innerHTML = categories.map(cat => `
+            <button class="category-btn ${cat === selectedCategory ? 'active' : ''}" 
+                    onclick="Controller.filterPOSByCategory('${cat}')">
+                <i class="fas fa-${this.getCategoryIcon(cat)}"></i>
+                <span>${cat}</span>
+            </button>
+        `).join('');
+    },
+
+    // Get icon for category
+    getCategoryIcon(category) {
+        const icons = {
+            'All': 'th',
+            'Fried Rice': 'bowl-rice',
+            'Kottu': 'mortar-pestle',
+            'Pasta': 'stroopwafel',
+            'Noodles': 'wheat-awn',
+            'Beverages': 'mug-hot'
+        };
+        return icons[category] || 'utensils';
+    },
+
     // Populate category filter dropdown
     renderCategoryFilter(categories) {
         const select = document.getElementById('categoryFilter');
