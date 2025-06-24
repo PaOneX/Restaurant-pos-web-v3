@@ -154,7 +154,7 @@ body {
 }
 
 #app-root {
-    min-height: 60vh;
+    min-height: 100vh;
 }
 
 .loading {
@@ -356,7 +356,6 @@ body {
 .btn-logout {
     background: rgba(255, 255, 255, 0.1);
     color: var(--white);
-    display: none;
 }
 
 .btn-clear {
@@ -437,7 +436,7 @@ table tbody tr:hover {
     display: grid;
     grid-template-columns: 1fr 400px;
     gap: 2rem;
-    height: calc(100vh - 200px);
+    min-height: calc(100vh - 200px);
 }
 
 .pos-left {

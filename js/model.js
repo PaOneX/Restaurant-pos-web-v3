@@ -12,9 +12,12 @@ const Model = {
     taxRate: 0,
     discount: 0,
     currency: "Rs.",
+    adminPhone: "",
+    lastResetDate: null,
   },
   currentUser: null,
   paymentAmount: 0,
+  orderCounter: 1,
 
   // ========================================
   // 1. STORAGE FUNCTIONS
@@ -457,6 +460,8 @@ const Model = {
   loadOrdersFromStorage() {
     const orders = this.getFromLocalStorage("orders");
     this.orders = orders || [];
+    const counter = this.getFromLocalStorage("orderCounter");
+    this.orderCounter = counter || 1;
     return this.orders;
   },
 
@@ -465,23 +470,78 @@ const Model = {
     if (this.cart.length === 0) return false;
 
     const totals = this.calculateTotal();
+    const paymentData = this.calculateBalance(this.paymentAmount);
+    
     const order = {
-      id: this.generateUniqueId(),
+      id: this.orderCounter.toString(),
       items: [...this.cart],
       totals: totals,
       date: this.getCurrentDateTime(),
-      user: this.currentUser || "Cashier",
+      user: this.currentUser ? this.currentUser.username : "Cashier",
+      payment: paymentData.payment,
+      balance: paymentData.balance,
     };
 
     this.orders.push(order);
+    this.orderCounter++;
+    
     this.saveToLocalStorage("orders", this.orders);
+    this.saveToLocalStorage("orderCounter", this.orderCounter);
     this.clearCart();
+    this.clearPayment();
+    
     return order;
   },
 
   // Get all orders
   getAllOrders() {
     return this.orders;
+  },
+
+  // Calculate daily total
+  calculateDailyTotal() {
+    const total = this.orders.reduce((sum, order) => sum + order.totals.total, 0);
+    const orderCount = this.orders.length;
+    return {
+      total: total,
+      orderCount: orderCount,
+      orders: this.orders,
+    };
+  },
+
+  // Get detailed order statistics with category breakdown
+  getDetailedOrderStats() {
+    const categoryStats = {};
+    let totalItems = 0;
+    let totalAmount = 0;
+    
+    this.orders.forEach(order => {
+      totalAmount += order.totals.total;
+      
+      order.items.forEach(item => {
+        // Get the product to find its category
+        const product = this.getProductById(item.productId);
+        const category = product ? product.category : 'Other';
+        
+        if (!categoryStats[category]) {
+          categoryStats[category] = {
+            count: 0,
+            amount: 0
+          };
+        }
+        
+        categoryStats[category].count += item.quantity;
+        categoryStats[category].amount += item.price * item.quantity;
+        totalItems += item.quantity;
+      });
+    });
+    
+    return {
+      categoryStats: categoryStats,
+      totalOrders: this.orders.length,
+      totalItems: totalItems,
+      totalAmount: totalAmount
+    };
   },
 
   // 2ï¸âƒ£4ï¸âƒ£ Get Order by ID
@@ -499,7 +559,15 @@ const Model = {
     }
     return false;
   },
-
+  // Reset daily orders (called at midnight)
+  resetDailyOrders() {
+    const dailyReport = this.calculateDailyTotal();
+    this.orders = [];
+    this.orderCounter = 1;
+    this.saveToLocalStorage("orders", this.orders);
+    this.saveToLocalStorage("orderCounter", this.orderCounter);
+    return dailyReport;
+  },
   // ========================================
   // 5. SETTINGS MANAGEMENT
   // ========================================
@@ -511,6 +579,25 @@ const Model = {
       this.settings = settings;
     }
     return this.settings;
+  },
+
+  // Check if new day and reset if needed
+  checkDailyReset() {
+    const today = new Date().toDateString();
+    const lastReset = this.settings.lastResetDate;
+    
+    if (lastReset !== today && this.orders.length > 0) {
+      // New day detected, generate report
+      const report = this.resetDailyOrders();
+      
+      // Update last reset date
+      this.settings.lastResetDate = today;
+      this.saveToLocalStorage("settings", this.settings);
+      
+      return report;
+    }
+    
+    return null;
   },
 
   // 3ï¸âƒ£2ï¸âƒ£ Update Restaurant Info
@@ -525,9 +612,15 @@ const Model = {
     this.saveToLocalStorage("settings", this.settings);
   },
 
-  // 3ï¸âƒ£4ï¸âƒ£ Apply Discount
+  // Apply Discount
   applyDiscount(discount) {
     this.settings.discount = parseFloat(discount);
+    this.saveToLocalStorage("settings", this.settings);
+  },
+
+  // Update Admin Phone
+  updateAdminPhone(phone) {
+    this.settings.adminPhone = phone;
     this.saveToLocalStorage("settings", this.settings);
   },
 

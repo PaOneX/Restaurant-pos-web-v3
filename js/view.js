@@ -323,10 +323,12 @@ const View = {
         const nameInput = document.getElementById('restaurantName');
         const taxInput = document.getElementById('taxRate');
         const discountInput = document.getElementById('discountRate');
+        const phoneInput = document.getElementById('adminPhone');
 
         if (nameInput) nameInput.value = settings.restaurantName;
         if (taxInput) taxInput.value = settings.taxRate;
         if (discountInput) discountInput.value = settings.discount;
+        if (phoneInput) phoneInput.value = settings.adminPhone || '';
 
         // Update header
         const header = document.querySelector('.header h1');
