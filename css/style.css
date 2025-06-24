@@ -1458,31 +1458,41 @@ table tbody tr:hover {
 
     .cart-items {
         width: 100%;
+        margin-bottom: 1rem;
     }
 
     .cart-item {
         padding: 1rem;
-        gap: 0.8rem;
+        gap: 1rem;
         width: 100%;
         border-radius: 8px;
+        display: flex;
+        flex-direction: column;
     }
 
     .item-details {
         width: 100%;
+        margin-bottom: 0.5rem;
     }
 
     .item-details h4 {
         font-size: 1rem;
+        margin-bottom: 0.3rem;
+        word-wrap: break-word;
     }
 
     .item-price {
         font-size: 0.9rem;
+        margin-bottom: 0.5rem;
     }
 
     .item-controls {
-        flex-wrap: wrap;
+        display: flex;
+        flex-wrap: nowrap;
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 0.8rem;
     }
 
     .btn-qty,
@@ -1502,40 +1512,68 @@ table tbody tr:hover {
     }
 
     .item-subtotal {
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         width: 100%;
         text-align: right;
         margin-top: 0.5rem;
-        font-weight: 600;
+        font-weight: 700;
+        color: var(--primary-color);
     }
 
     .cart-totals {
-        padding-top: 1rem;
+        padding: 1.5rem 1rem 1rem 1rem;
         width: 100%;
+        border-top: 2px solid var(--border-color);
+        margin-top: 1rem;
     }
 
     .total-row {
-        font-size: 0.95rem;
-        padding: 0.5rem 0;
+        font-size: 1rem;
+        padding: 0.6rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .total-row.grand-total {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         padding-top: 1rem;
+        border-top: 2px solid var(--border-color);
+        margin-top: 0.5rem;
+        font-weight: 700;
     }
 
     .payment-section {
         width: 100%;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 2px solid var(--border-color);
+    }
+
+    .payment-section .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .payment-section .form-group label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
     }
 
     .payment-section input {
-        padding: 0.8rem;
-        font-size: 1.2rem;
+        padding: 0.9rem;
+        font-size: 1.1rem;
         width: 100%;
+        border-radius: 8px;
     }
 
     .balance-display {
         width: 100%;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--light-color);
+        border-radius: 8px;
     }
 
     .balance-row {
@@ -1547,15 +1585,23 @@ table tbody tr:hover {
     }
 
     .cart-actions {
+        display: flex;
         flex-direction: column;
         gap: 0.8rem;
         width: 100%;
+        margin-top: 1.5rem;
     }
 
     .cart-actions .btn {
         width: 100%;
-        padding: 0.9rem;
-        font-size: 1rem;
+        padding: 1rem;
+        font-size: 1.05rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .cart-actions .btn i {
+        font-size: 1.2rem;
     }
 
     .table-header {
