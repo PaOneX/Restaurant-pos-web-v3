@@ -20,16 +20,16 @@ const View = {
 
         tbody.innerHTML = products.map(product => `
             <tr>
-                <td>${product.id}</td>
-                <td>${product.name}</td>
-                <td>${product.category}</td>
+                <td>${Security.escapeHTML(product.id)}</td>
+                <td>${Security.escapeHTML(product.name)}</td>
+                <td>${Security.escapeHTML(product.category)}</td>
                 <td>${Model.formatCurrency(product.price)}</td>
                 <td>${product.stock}</td>
                 <td>
-                    <button class="btn btn-sm btn-edit" onclick="Controller.editProduct('${product.id}')">
+                    <button class="btn btn-sm btn-edit" onclick="Controller.editProduct('${Security.escapeHTML(product.id)}')">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button class="btn btn-sm btn-delete" onclick="Controller.deleteProduct('${product.id}')">
+                    <button class="btn btn-sm btn-delete" onclick="Controller.deleteProduct('${Security.escapeHTML(product.id)}')">
                         <i class="fas fa-trash"></i> Delete
                     </button>
                 </td>

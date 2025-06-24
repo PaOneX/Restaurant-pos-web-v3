@@ -152,11 +152,6 @@ const Controller = {
 
     //  Add Product
     addProduct() {
-        //  Validate form
-        if (!this.validateProductForm()) {
-            return;
-        }
-
         const productData = {
             name: document.getElementById('productName').value,
             category: document.getElementById('productCategory').value,
@@ -164,7 +159,14 @@ const Controller = {
             stock: document.getElementById('productStock').value
         };
 
-        const product = Model.addProduct(productData);
+        // Security validation
+        const validation = Security.validateProductData(productData);
+        if (!validation.valid) {
+            View.showAlert(validation.errors.join(', '), 'error');
+            return;
+        }
+
+        const product = Model.addProduct(validation.sanitizedData);
         if (product) {
             View.showAlert('Product added successfully!', 'success');
             this.loadProducts();
@@ -189,10 +191,6 @@ const Controller = {
     updateProduct() {
         const productId = document.getElementById('productId').value;
         
-        if (!this.validateProductForm()) {
-            return;
-        }
-
         const productData = {
             name: document.getElementById('productName').value,
             category: document.getElementById('productCategory').value,
@@ -200,7 +198,14 @@ const Controller = {
             stock: document.getElementById('productStock').value
         };
 
-        if (Model.updateProduct(productId, productData)) {
+        // Security validation
+        const validation = Security.validateProductData(productData);
+        if (!validation.valid) {
+            View.showAlert(validation.errors.join(', '), 'error');
+            return;
+        }
+
+        if (Model.updateProduct(productId, validation.sanitizedData)) {
             View.showAlert('Product updated successfully!', 'success');
             this.loadProducts();
             this.loadProductsToPOS();
@@ -340,7 +345,9 @@ const Controller = {
 
     //  Update Cart Quantity
     updateCartQuantity(productId, quantity) {
-        Model.updateCartQuantity(productId, quantity);
+        // Validate and sanitize quantity
+        const validQty = Security.validateCartQuantity(quantity);
+        Model.updateCartQuantity(productId, validQty);
         this.renderCart();
     },
 
@@ -548,22 +555,33 @@ const Controller = {
     },
 
     updateSettings() {
-        const name = document.getElementById('restaurantName').value;
-        const tax = document.getElementById('taxRate').value;
-        const discount = document.getElementById('discountRate').value;
-        const phone = document.getElementById('adminPhone').value;
+        const settingsData = {
+            name: document.getElementById('restaurantName').value,
+            tax: document.getElementById('taxRate').value,
+            discount: document.getElementById('discountRate').value,
+            phone: document.getElementById('adminPhone').value
+        };
+
+        // Security validation
+        const validation = Security.validateSettingsData(settingsData);
+        if (!validation.valid) {
+            View.showAlert(validation.errors.join(', '), 'error');
+            return;
+        }
+
+        const sanitized = validation.sanitizedData;
 
         //  Update restaurant info
-        Model.updateRestaurantInfo(name);
+        Model.updateRestaurantInfo(sanitized.name);
         
         //  Set tax rate
-        Model.setTaxRate(tax);
+        Model.setTaxRate(sanitized.tax);
         
         //  Apply discount
-        Model.applyDiscount(discount);
+        Model.applyDiscount(sanitized.discount);
         
         //  Update admin phone
-        Model.updateAdminPhone(phone);
+        Model.updateAdminPhone(sanitized.phone);
 
         View.showAlert('Settings updated successfully!', 'success');
         this.updateSettingsUI();
@@ -647,14 +665,22 @@ const Controller = {
 
     //  Login User
     loginUser() {
-        const username = document.getElementById('loginUsername').value.trim();
+        const username = Security.sanitizeInput(document.getElementById('loginUsername').value.trim(), 50);
         const password = document.getElementById('loginPassword').value.trim();
 
-        console.log('Login attempt with:', { username, password });
+        // Check if user is locked out
+        const lockout = Security.isLockedOut(username);
+        if (lockout && lockout.locked) {
+            View.showAlert(`Too many failed attempts. Please try again in ${lockout.remainingMinutes} minutes.`, 'error');
+            return;
+        }
+
+        console.log('Login attempt with:', { username });
 
         const user = Model.loginUser(username, password);
         
         if (user) {
+            Security.resetLoginAttempts(username);
             const roleMessage = user.role === 'admin' ? 'Full Access' : 'POS Access Only';
             View.showAlert(`Welcome ${user.username}! (${roleMessage})`, 'success');
             View.updateUserDisplay(user);
@@ -666,7 +692,15 @@ const Controller = {
             // Redirect to appropriate page
             this.showPage('pos');
         } else {
-            View.showAlert('Invalid username or password', 'error');
+            Security.recordFailedLogin(username);
+            const attempts = Security.loginAttempts[username];
+            const remaining = Security.maxLoginAttempts - attempts.count;
+            
+            if (remaining > 0) {
+                View.showAlert(`Invalid username or password. ${remaining} attempts remaining.`, 'error');
+            } else {
+                View.showAlert('Too many failed attempts. Account locked for 15 minutes.', 'error');
+            }
         }
     },
 
