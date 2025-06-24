@@ -119,11 +119,15 @@ const View = {
 
         cartItems.innerHTML = cart.map(item => `
             <div class="cart-item">
-                <div class="item-details">
-                    <h4>${item.name}</h4>
-                    <p class="item-price">${Model.formatCurrency(item.price)}</p>
+                <div class="item-row item-details">
+                    <div class="item-name-wrap">
+                        <h4>${item.name}</h4>
+                    </div>
+                    <div class="item-price-wrap">
+                        <p class="item-price">${Model.formatCurrency(item.price)}</p>
+                    </div>
                 </div>
-                <div class="item-controls">
+                <div class="item-row item-controls">
                     <button class="btn-qty" onclick="Controller.updateCartQuantity('${item.productId}', ${item.quantity - 1})">
                         <i class="fas fa-minus"></i>
                     </button>
@@ -137,8 +141,9 @@ const View = {
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
-                <div class="item-subtotal">
-                    ${Model.formatCurrency(Model.calculateSubtotal(item.productId))}
+                <div class="item-row item-subtotal-row">
+                    <span class="subtotal-label">Subtotal:</span>
+                    <span class="item-subtotal">${Model.formatCurrency(Model.calculateSubtotal(item.productId))}</span>
                 </div>
             </div>
         `).join('');
