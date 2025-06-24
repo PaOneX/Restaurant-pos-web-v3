@@ -1,4 +1,4 @@
-// ========================================
+﻿// ========================================
 // VIEW LAYER - UI Rendering
 // ========================================
 
@@ -8,7 +8,7 @@ const View = {
     // 1. PRODUCT VIEW FUNCTIONS
     // ========================================
 
-    // 4️⃣ Display Products in Management Table
+    // 4ï¸âƒ£ Display Products in Management Table
     renderProductsTable(products) {
         const tbody = document.getElementById('productsTableBody');
         if (!tbody) return;
@@ -37,7 +37,7 @@ const View = {
         `).join('');
     },
 
-    // 1️⃣1️⃣ Display Products in POS Grid
+    // 1ï¸âƒ£1ï¸âƒ£ Display Products in POS Grid
     renderProductsGrid(products) {
         const grid = document.getElementById('productsGrid');
         if (!grid) return;
@@ -101,7 +101,7 @@ const View = {
     // 2. CART VIEW FUNCTIONS
     // ========================================
 
-    // 1️⃣3️⃣ Render Cart
+    // 1ï¸âƒ£3ï¸âƒ£ Render Cart
     renderCart(cart) {
         const cartItems = document.getElementById('cartItems');
         const emptyCart = document.getElementById('emptyCart');
@@ -197,7 +197,7 @@ const View = {
     // 3. RECEIPT VIEW FUNCTIONS
     // ========================================
 
-    // 1️⃣9️⃣ Generate Receipt
+    // 1ï¸âƒ£9ï¸âƒ£ Generate Receipt
     generateReceipt(order) {
         const settings = Model.getSettings();
         const receiptContainer = document.getElementById('receiptContent');
@@ -282,7 +282,7 @@ const View = {
     // 4. ORDER HISTORY VIEW
     // ========================================
 
-    // 2️⃣3️⃣ Display Orders
+    // 2ï¸âƒ£3ï¸âƒ£ Display Orders
     renderOrdersTable(orders) {
         const tbody = document.getElementById('ordersTableBody');
         if (!tbody) return;
@@ -348,7 +348,7 @@ const View = {
     // 7. FORM HANDLING
     // ========================================
 
-    // 6️⃣ Fill Product Form (for editing)
+    // 6ï¸âƒ£ Fill Product Form (for editing)
     fillProductForm(product) {
         document.getElementById('productId').value = product.id;
         document.getElementById('productName').value = product.name;
@@ -364,7 +364,7 @@ const View = {
         }
     },
 
-    // 9️⃣ Clear Product Form
+    // 9ï¸âƒ£ Clear Product Form
     clearProductForm() {
         document.getElementById('productForm').reset();
         document.getElementById('productId').value = '';
@@ -381,7 +381,7 @@ const View = {
     // 8. ALERTS & MESSAGES
     // ========================================
 
-    // 3️⃣6️⃣ Show Alert
+    // 3ï¸âƒ£6ï¸âƒ£ Show Alert
     showAlert(message, type = 'info') {
         // Create alert element
         const alert = document.createElement('div');
@@ -484,3 +484,4 @@ const View = {
         this.hideModal('loginModal');
     }
 };
+

@@ -1,4 +1,4 @@
-// ========================================
+﻿// ========================================
 // CONTROLLER LAYER - Business Logic
 // ========================================
 
@@ -8,9 +8,9 @@ const Controller = {
     // 1. SYSTEM INITIALIZATION
     // ========================================
 
-    // 1️⃣ Initialize System
+    //  Initialize System
     initSystem() {
-        console.log('🚀 Initializing Restaurant POS System...');
+        console.log('ðŸš€ Initializing Restaurant POS System...');
         
         // Load all data from storage
         Model.loadProductsFromStorage();
@@ -25,7 +25,7 @@ const Controller = {
         // Setup event listeners
         this.setupEventListeners();
 
-        console.log('✅ System initialized successfully');
+        console.log(' System initialized successfully');
     },
 
     // Setup event listeners
@@ -78,11 +78,65 @@ const Controller = {
         }
     },
 
+    // Setup page-specific event listeners
+    setupProductsPageListeners() {
+        // Search input
+        const searchInput = document.getElementById('searchProduct');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchProducts(e.target.value);
+            });
+        }
+
+        // Category filter
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', (e) => {
+                this.filterByCategory(e.target.value);
+            });
+        }
+
+        // Product form
+        const productForm = document.getElementById('productForm');
+        if (productForm) {
+            productForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const editingId = document.getElementById('editingProductId').value;
+                if (editingId) {
+                    this.updateProduct();
+                } else {
+                    this.addProduct();
+                }
+            });
+        }
+    },
+
+    setupPOSPageListeners() {
+        // POS search
+        const posSearch = document.getElementById('posSearch');
+        if (posSearch) {
+            posSearch.addEventListener('input', (e) => {
+                this.searchProductsInPOS(e.target.value);
+            });
+        }
+    },
+
+    setupSettingsPageListeners() {
+        // Settings form
+        const settingsForm = document.getElementById('settingsForm');
+        if (settingsForm) {
+            settingsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.updateSettings();
+            });
+        }
+    },
+
     // ========================================
     // 2. PRODUCT MANAGEMENT
     // ========================================
 
-    // 4️⃣ Load Products
+    //  Load Products
     loadProducts() {
         const products = Model.getAllProducts();
         View.renderProductsTable(products);
@@ -92,9 +146,9 @@ const Controller = {
         View.renderCategoryFilter(categories);
     },
 
-    // 5️⃣ Add Product
+    //  Add Product
     addProduct() {
-        // 3️⃣5️⃣ Validate form
+        //  Validate form
         if (!this.validateProductForm()) {
             return;
         }
@@ -117,7 +171,7 @@ const Controller = {
         }
     },
 
-    // 6️⃣ Edit Product
+    //  Edit Product
     editProduct(productId) {
         const product = Model.getProductById(productId);
         if (product) {
@@ -127,7 +181,7 @@ const Controller = {
         }
     },
 
-    // 7️⃣ Update Product
+    //  Update Product
     updateProduct() {
         const productId = document.getElementById('productId').value;
         
@@ -152,7 +206,7 @@ const Controller = {
         }
     },
 
-    // 8️⃣ Delete Product
+    //  Delete Product
     deleteProduct(productId) {
         if (View.showConfirm('Are you sure you want to delete this product?')) {
             if (Model.deleteProduct(productId)) {
@@ -165,30 +219,30 @@ const Controller = {
         }
     },
 
-    // 9️⃣ Clear Product Form
+    //  Clear Product Form
     clearProductForm() {
         View.clearProductForm();
     },
 
-    // 🔟 & 2️⃣6️⃣ Search Products
+    //  &  Search Products
     searchProducts(query) {
         const products = Model.searchProducts(query);
         View.renderProductsTable(products);
     },
 
-    // 2️⃣7️⃣ Filter by Category
+    //  Filter by Category
     filterByCategory(category) {
         const products = Model.filterByCategory(category);
         View.renderProductsTable(products);
     },
 
-    // 2️⃣8️⃣ Sort by Price
+    //  Sort by Price
     sortByPrice(order) {
         const products = Model.sortByPrice(order);
         View.renderProductsTable(products);
     },
 
-    // 3️⃣5️⃣ Validate Product Form
+    //  Validate Product Form
     validateProductForm() {
         const name = document.getElementById('productName').value.trim();
         const category = document.getElementById('productCategory').value.trim();
@@ -222,7 +276,7 @@ const Controller = {
     // 3. POS / BILLING FUNCTIONS
     // ========================================
 
-    // 1️⃣1️⃣ Load Products to POS
+    //  Load Products to POS
     loadProductsToPOS() {
         const products = Model.getAllProducts();
         const categories = Model.getCategories();
@@ -263,7 +317,7 @@ const Controller = {
         View.renderProductsGrid(products);
     },
 
-    // 1️⃣2️⃣ Add to Cart
+    //  Add to Cart
     addToCart(productId) {
         if (Model.addToCart(productId)) {
             this.renderCart();
@@ -273,19 +327,19 @@ const Controller = {
         }
     },
 
-    // 1️⃣3️⃣ Render Cart
+    //  Render Cart
     renderCart() {
         const cart = Model.getCart();
         View.renderCart(cart);
     },
 
-    // 1️⃣4️⃣ Update Cart Quantity
+    //  Update Cart Quantity
     updateCartQuantity(productId, quantity) {
         Model.updateCartQuantity(productId, quantity);
         this.renderCart();
     },
 
-    // 1️⃣5️⃣ Remove from Cart
+    //  Remove from Cart
     removeFromCart(productId) {
         if (View.showConfirm('Remove this item from cart?')) {
             Model.removeFromCart(productId);
@@ -294,7 +348,7 @@ const Controller = {
         }
     },
 
-    // 1️⃣6️⃣ Clear Cart
+    //  Clear Cart
     clearCart() {
         if (View.showConfirm('Clear all items from cart?')) {
             Model.clearCart();
@@ -319,7 +373,7 @@ const Controller = {
     // 4. RECEIPT & PRINTING
     // ========================================
 
-    // 2️⃣0️⃣ Print Bill
+    //  Print Bill
     printBill() {
         const cart = Model.getCart();
         
@@ -337,7 +391,7 @@ const Controller = {
             return;
         }
 
-        // 2️⃣1️⃣ Save order first
+        //  Save order first
         const order = Model.saveOrder();
         
         if (order) {
@@ -345,7 +399,7 @@ const Controller = {
             order.payment = paymentAmount;
             order.balance = paymentAmount - order.totals.total;
             
-            // 1️⃣9️⃣ Generate receipt
+            //  Generate receipt
             View.generateReceipt(order);
             
             // Show modal
@@ -375,13 +429,13 @@ const Controller = {
     // 5. ORDER MANAGEMENT
     // ========================================
 
-    // 2️⃣3️⃣ Load Orders
+    //  Load Orders
     loadOrders() {
         const orders = Model.getAllOrders();
         View.renderOrdersTable(orders);
     },
 
-    // 2️⃣4️⃣ View Order
+    //  View Order
     viewOrder(orderId) {
         const order = Model.getOrderById(orderId);
         if (order) {
@@ -390,7 +444,7 @@ const Controller = {
         }
     },
 
-    // 2️⃣5️⃣ Delete Order
+    //  Delete Order
     deleteOrder(orderId) {
         if (View.showConfirm('Are you sure you want to delete this order?')) {
             if (Model.deleteOrder(orderId)) {
@@ -416,13 +470,13 @@ const Controller = {
         const tax = document.getElementById('taxRate').value;
         const discount = document.getElementById('discountRate').value;
 
-        // 3️⃣2️⃣ Update restaurant info
+        //  Update restaurant info
         Model.updateRestaurantInfo(name);
         
-        // 3️⃣3️⃣ Set tax rate
+        //  Set tax rate
         Model.setTaxRate(tax);
         
-        // 3️⃣4️⃣ Apply discount
+        //  Apply discount
         Model.applyDiscount(discount);
 
         View.showAlert('Settings updated successfully!', 'success');
@@ -449,7 +503,7 @@ const Controller = {
         View.showLoginForm();
     },
 
-    // 2️⃣9️⃣ Login User
+    //  Login User
     loginUser() {
         const username = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value.trim();
@@ -474,7 +528,7 @@ const Controller = {
         }
     },
 
-    // 3️⃣0️⃣ Logout User
+    //  Logout User
     logoutUser() {
         if (View.showConfirm('Are you sure you want to logout?')) {
             Model.logoutUser();
@@ -495,7 +549,7 @@ const Controller = {
         }
     },
 
-    // 3️⃣1️⃣ Check User Role (for access control)
+    //  Check User Role (for access control)
     checkUserRole(requiredRole) {
         return Model.checkUserRole(requiredRole);
     },
@@ -504,7 +558,7 @@ const Controller = {
     // 8. PAGE NAVIGATION
     // ========================================
 
-    // 3️⃣9️⃣ & 4️⃣0️⃣ Show Page
+    //  &  Show Page
     async showPage(pageName) {
         // Check permissions
         if (!this.checkPageAccess(pageName)) {
@@ -541,16 +595,19 @@ const Controller = {
                 switch(pageName) {
                     case 'products':
                         this.loadProducts();
+                        this.setupProductsPageListeners();
                         break;
                     case 'pos':
                         this.loadProductsToPOS();
                         this.renderCart();
+                        this.setupPOSPageListeners();
                         break;
                     case 'orders':
                         this.loadOrders();
                         break;
                     case 'settings':
                         this.updateSettingsUI();
+                        this.setupSettingsPageListeners();
                         break;
                 }
             }, 100);
@@ -580,3 +637,4 @@ const Controller = {
         return allowedRoles.includes(userRole);
     }
 };
+

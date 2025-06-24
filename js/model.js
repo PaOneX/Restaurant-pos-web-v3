@@ -1,4 +1,4 @@
-// ========================================
+﻿// ========================================
 // MODEL LAYER - Data Management
 // ========================================
 
@@ -20,7 +20,7 @@ const Model = {
   // 1. STORAGE FUNCTIONS
   // ========================================
 
-  // 2️⃣ Save to LocalStorage
+  // 2ï¸âƒ£ Save to LocalStorage
   saveToLocalStorage(key, data) {
     try {
       const jsonData = JSON.stringify(data);
@@ -32,7 +32,7 @@ const Model = {
     }
   },
 
-  // 3️⃣ Get from LocalStorage
+  // 3ï¸âƒ£ Get from LocalStorage
   getFromLocalStorage(key) {
     try {
       const jsonData = localStorage.getItem(key);
@@ -100,7 +100,7 @@ const Model = {
         stock: 30,
       },
 
-      // 🥘 Kottu
+      // ðŸ¥˜ Kottu
       {
         id: "6",
         name: "Vegetable Kottu",
@@ -132,7 +132,7 @@ const Model = {
         stock: 30,
       },
 
-      // 🍝 Pasta
+      // ðŸ Pasta
       {
         id: "12",
         name: "Vegetable Pasta",
@@ -162,7 +162,7 @@ const Model = {
         stock: 25,
       },
 
-      // 🍜 Noodles
+      // ðŸœ Noodles
       {
         id: "16",
         name: "Vegetable Noodles",
@@ -199,7 +199,7 @@ const Model = {
         stock: 25,
       },
 
-      // 🥤 Beverages
+      // ðŸ¥¤ Beverages
       {
         id: "21",
         name: "Coca Cola",
@@ -264,7 +264,7 @@ const Model = {
     return this.products;
   },
 
-  // 5️⃣ Add Product
+  // 5ï¸âƒ£ Add Product
   addProduct(productData) {
     const product = {
       id: this.generateUniqueId(),
@@ -283,7 +283,7 @@ const Model = {
     return this.products.find((p) => p.id === productId);
   },
 
-  // 7️⃣ Update Product
+  // 7ï¸âƒ£ Update Product
   updateProduct(productId, productData) {
     const index = this.products.findIndex((p) => p.id === productId);
     if (index !== -1) {
@@ -300,7 +300,7 @@ const Model = {
     return false;
   },
 
-  // 8️⃣ Delete Product
+  // 8ï¸âƒ£ Delete Product
   deleteProduct(productId) {
     const index = this.products.findIndex((p) => p.id === productId);
     if (index !== -1) {
@@ -311,7 +311,7 @@ const Model = {
     return false;
   },
 
-  // 🔟 Search Products
+  // ðŸ”Ÿ Search Products
   searchProducts(query) {
     if (!query) return this.products;
     const lowerQuery = query.toLowerCase();
@@ -322,13 +322,13 @@ const Model = {
     );
   },
 
-  // 2️⃣7️⃣ Filter by Category
+  // 2ï¸âƒ£7ï¸âƒ£ Filter by Category
   filterByCategory(category) {
     if (!category || category === "All") return this.products;
     return this.products.filter((p) => p.category === category);
   },
 
-  // 2️⃣8️⃣ Sort by Price
+  // 2ï¸âƒ£8ï¸âƒ£ Sort by Price
   sortByPrice(order = "asc") {
     const sorted = [...this.products];
     return sorted.sort((a, b) =>
@@ -363,7 +363,7 @@ const Model = {
     return this.cart;
   },
 
-  // 1️⃣2️⃣ Add to Cart
+  // 1ï¸âƒ£2ï¸âƒ£ Add to Cart
   addToCart(productId) {
     const product = this.getProductById(productId);
     if (!product) return false;
@@ -385,7 +385,7 @@ const Model = {
     return true;
   },
 
-  // 1️⃣4️⃣ Update Cart Quantity
+  // 1ï¸âƒ£4ï¸âƒ£ Update Cart Quantity
   updateCartQuantity(productId, quantity) {
     const item = this.cart.find((item) => item.productId === productId);
     if (item) {
@@ -400,7 +400,7 @@ const Model = {
     return false;
   },
 
-  // 1️⃣5️⃣ Remove from Cart
+  // 1ï¸âƒ£5ï¸âƒ£ Remove from Cart
   removeFromCart(productId) {
     const index = this.cart.findIndex((item) => item.productId === productId);
     if (index !== -1) {
@@ -411,19 +411,19 @@ const Model = {
     return false;
   },
 
-  // 1️⃣6️⃣ Clear Cart
+  // 1ï¸âƒ£6ï¸âƒ£ Clear Cart
   clearCart() {
     this.cart = [];
     this.saveToLocalStorage("cart", this.cart);
   },
 
-  // 1️⃣7️⃣ Calculate Subtotal
+  // 1ï¸âƒ£7ï¸âƒ£ Calculate Subtotal
   calculateSubtotal(productId) {
     const item = this.cart.find((item) => item.productId === productId);
     return item ? item.price * item.quantity : 0;
   },
 
-  // 1️⃣8️⃣ Calculate Total
+  // 1ï¸âƒ£8ï¸âƒ£ Calculate Total
   calculateTotal() {
     let total = 0;
     this.cart.forEach((item) => {
@@ -460,7 +460,7 @@ const Model = {
     return this.orders;
   },
 
-  // 2️⃣1️⃣ Save Order
+  // 2ï¸âƒ£1ï¸âƒ£ Save Order
   saveOrder() {
     if (this.cart.length === 0) return false;
 
@@ -484,12 +484,12 @@ const Model = {
     return this.orders;
   },
 
-  // 2️⃣4️⃣ Get Order by ID
+  // 2ï¸âƒ£4ï¸âƒ£ Get Order by ID
   getOrderById(orderId) {
     return this.orders.find((o) => o.id === orderId);
   },
 
-  // 2️⃣5️⃣ Delete Order
+  // 2ï¸âƒ£5ï¸âƒ£ Delete Order
   deleteOrder(orderId) {
     const index = this.orders.findIndex((o) => o.id === orderId);
     if (index !== -1) {
@@ -513,19 +513,19 @@ const Model = {
     return this.settings;
   },
 
-  // 3️⃣2️⃣ Update Restaurant Info
+  // 3ï¸âƒ£2ï¸âƒ£ Update Restaurant Info
   updateRestaurantInfo(name) {
     this.settings.restaurantName = name;
     this.saveToLocalStorage("settings", this.settings);
   },
 
-  // 3️⃣3️⃣ Set Tax Rate
+  // 3ï¸âƒ£3ï¸âƒ£ Set Tax Rate
   setTaxRate(rate) {
     this.settings.taxRate = parseFloat(rate);
     this.saveToLocalStorage("settings", this.settings);
   },
 
-  // 3️⃣4️⃣ Apply Discount
+  // 3ï¸âƒ£4ï¸âƒ£ Apply Discount
   applyDiscount(discount) {
     this.settings.discount = parseFloat(discount);
     this.saveToLocalStorage("settings", this.settings);
@@ -539,7 +539,7 @@ const Model = {
   // 6. USER MANAGEMENT
   // ========================================
 
-  // 2️⃣9️⃣ Login User
+  // 2ï¸âƒ£9ï¸âƒ£ Login User
   loginUser(username, password) {
     // Simple authentication (in real app, use server-side)
     const users = this.getFromLocalStorage("users") || [
@@ -564,7 +564,7 @@ const Model = {
     return null;
   },
 
-  // 3️⃣0️⃣ Logout User
+  // 3ï¸âƒ£0ï¸âƒ£ Logout User
   logoutUser() {
     this.currentUser = null;
     localStorage.removeItem("currentUser");
@@ -576,7 +576,7 @@ const Model = {
     return this.currentUser;
   },
 
-  // 3️⃣1️⃣ Check User Role
+  // 3ï¸âƒ£1ï¸âƒ£ Check User Role
   checkUserRole(requiredRole) {
     if (!this.currentUser) return false;
     return (
@@ -589,12 +589,12 @@ const Model = {
   // 7. UTILITY FUNCTIONS
   // ========================================
 
-  // 3️⃣8️⃣ Generate Unique ID
+  // 3ï¸âƒ£8ï¸âƒ£ Generate Unique ID
   generateUniqueId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   },
 
-  // 2️⃣2️⃣ Get Current Date Time
+  // 2ï¸âƒ£2ï¸âƒ£ Get Current Date Time
   getCurrentDateTime() {
     const now = new Date();
     return {
@@ -604,7 +604,7 @@ const Model = {
     };
   },
 
-  // 3️⃣7️⃣ Format Currency
+  // 3ï¸âƒ£7ï¸âƒ£ Format Currency
   formatCurrency(amount) {
     return this.settings.currency + " " + parseFloat(amount).toFixed(2);
   },
@@ -631,3 +631,4 @@ const Model = {
     this.paymentAmount = 0;
   },
 };
+
