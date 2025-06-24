@@ -466,8 +466,32 @@ const Model = {
   },
 
   // 2ï¸âƒ£1ï¸âƒ£ Save Order
+  // Save Order
   saveOrder() {
     if (this.cart.length === 0) return false;
+
+    // Check if all products have sufficient stock
+    for (let cartItem of this.cart) {
+      const product = this.products.find(p => p.id === cartItem.productId);
+      if (!product) {
+        console.error('Product not found:', cartItem);
+        return { error: `Product ${cartItem.name} not found` };
+      }
+      if (product.stock < cartItem.quantity) {
+        return { error: `Insufficient stock for ${cartItem.name}. Available: ${product.stock}` };
+      }
+    }
+
+    // Deduct stock from products
+    this.cart.forEach(cartItem => {
+      const product = this.products.find(p => p.id === cartItem.productId);
+      if (product) {
+        product.stock -= cartItem.quantity;
+      }
+    });
+    
+    // Save updated products to localStorage
+    this.saveToLocalStorage('products', this.products);
 
     const totals = this.calculateTotal();
     const paymentData = this.calculateBalance(this.paymentAmount);

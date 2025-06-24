@@ -105,8 +105,8 @@ const Controller = {
         if (productForm) {
             productForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const editingId = document.getElementById('editingProductId').value;
-                if (editingId) {
+                const editingId = document.getElementById('productId');
+                if (editingId && editingId.value) {
                     this.updateProduct();
                 } else {
                     this.addProduct();
@@ -211,8 +211,9 @@ const Controller = {
     },
 
     //  Delete Product
-    deleteProduct(productId) {
-        if (View.showConfirm('Are you sure you want to delete this product?')) {
+    async deleteProduct(productId) {
+        const confirmed = await View.showConfirm('Are you sure you want to delete this product?');
+        if (confirmed) {
             if (Model.deleteProduct(productId)) {
                 View.showAlert('Product deleted successfully!', 'success');
                 this.loadProducts();
@@ -395,13 +396,27 @@ const Controller = {
             return;
         }
 
-        //  Save order first
-        const order = Model.saveOrder();
-        
-        if (order) {
-            // Add payment info to order
-            order.payment = paymentAmount;
-            order.balance = paymentAmount - order.totals.total;
+        try {
+            //  Save order first
+            const order = Model.saveOrder();
+            
+            // Check for errors
+            if (!order) {
+                View.showAlert('Failed to complete order', 'error');
+                return;
+            }
+            
+            if (order.error) {
+                View.showAlert(order.error, 'error');
+                return;
+            }
+            
+            // Order already has payment and balance from Model.saveOrder
+            // Just ensure they're set
+            if (!order.payment) {
+                order.payment = paymentAmount;
+                order.balance = paymentAmount - order.totals.total;
+            }
             
             //  Generate receipt
             View.generateReceipt(order);
@@ -411,16 +426,24 @@ const Controller = {
             
             // Print after short delay
             setTimeout(() => {
-                window.print();
+                try {
+                    window.print();
+                } catch (printError) {
+                    console.error('Print error:', printError);
+                    View.showAlert('Print function not available', 'error');
+                }
             }, 500);
 
             // Clear cart, payment and refresh
-            Model.clearPayment();
             this.renderCart();
             View.clearPaymentFields();
-            View.showAlert('Order completed successfully!', 'success');
-        } else {
-            View.showAlert('Failed to complete order', 'error');
+            View.showAlert('Order completed successfully! Stock updated.', 'success');
+            
+            // Refresh products display to show updated stock
+            this.loadProductsToPOS();
+        } catch (error) {
+            console.error('Error in printBill:', error);
+            View.showAlert('Error processing order: ' + error.message, 'error');
         }
     },
 
@@ -449,8 +472,9 @@ const Controller = {
     },
 
     //  Delete Order
-    deleteOrder(orderId) {
-        if (View.showConfirm('Are you sure you want to delete this order?')) {
+    async deleteOrder(orderId) {
+        const confirmed = await View.showConfirm('Are you sure you want to delete this order?');
+        if (confirmed) {
             if (Model.deleteOrder(orderId)) {
                 View.showAlert('Order deleted successfully!', 'success');
                 this.loadOrders();

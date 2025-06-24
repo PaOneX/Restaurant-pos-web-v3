@@ -384,29 +384,41 @@ const View = {
     // ========================================
 
     // 3ï¸âƒ£6ï¸âƒ£ Show Alert
+    // Show Alert using SweetAlert2
     showAlert(message, type = 'info') {
-        // Create alert element
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type}`;
-        alert.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-            <span>${message}</span>
-        `;
+        const iconMap = {
+            'success': 'success',
+            'error': 'error',
+            'warning': 'warning',
+            'info': 'info'
+        };
 
-        // Add to page
-        const container = document.querySelector('.container') || document.body;
-        container.insertBefore(alert, container.firstChild);
-
-        // Auto remove after 3 seconds
-        setTimeout(() => {
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 300);
-        }, 3000);
+        Swal.fire({
+            icon: iconMap[type] || 'info',
+            title: type === 'success' ? 'Success!' : type === 'error' ? 'Error!' : 'Info',
+            text: message,
+            timer: 3000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end',
+            timerProgressBar: true
+        });
     },
 
-    // Show confirmation dialog
+    // Show confirmation dialog using SweetAlert2
     showConfirm(message) {
-        return confirm(message);
+        return Swal.fire({
+            title: 'Are you sure?',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#6366f1',
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            return result.isConfirmed;
+        });
     },
 
     // ========================================
