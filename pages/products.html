@@ -1,0 +1,68 @@
+<!-- PRODUCTS MANAGEMENT PAGE -->
+<h2><i class="fas fa-box"></i> Product Management</h2>
+
+<!-- Product Form -->
+<div class="card">
+    <h3>Add / Edit Product</h3>
+    <form id="productForm">
+        <input type="hidden" id="productId">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="productName">Product Name *</label>
+                <input type="text" id="productName" required>
+            </div>
+            <div class="form-group">
+                <label for="productCategory">Category *</label>
+                <input type="text" id="productCategory" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="productPrice">Price (Rs.) *</label>
+                <input type="number" id="productPrice" step="0.01" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="productStock">Stock Quantity *</label>
+                <input type="number" id="productStock" min="0" required>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Add Product
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="Controller.clearProductForm()">
+                <i class="fas fa-times"></i> Clear
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="table-header">
+        <h3>Products List</h3>
+        <div class="table-filters">
+            <input type="text" id="searchProduct" placeholder="Search...">
+            <select id="categoryFilter">
+                <option value="All">All Categories</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="productsTableBody">
+                <!-- Products will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+</div>

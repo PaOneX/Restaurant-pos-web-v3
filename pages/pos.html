@@ -1,0 +1,78 @@
+<!-- POS / BILLING PAGE -->
+<div class="pos-container">
+    <!-- Left: Products -->
+    <div class="pos-left">
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="posSearch" placeholder="Search products...">
+        </div>
+        
+        <!-- Category Filter Tabs -->
+        <div class="category-filters" id="categoryFilters">
+            <!-- Categories will be loaded here -->
+        </div>
+        
+        <div id="productsGrid" class="products-grid">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Right: Cart & Billing -->
+    <div class="pos-right">
+        <h2><i class="fas fa-shopping-cart"></i> Current Order</h2>
+        
+        <div id="emptyCart" class="empty-cart">
+            <i class="fas fa-shopping-cart"></i>
+            <p>Cart is empty</p>
+            <p>Add products to start billing</p>
+        </div>
+
+        <div id="cartItems" class="cart-items">
+            <!-- Cart items will be loaded here -->
+        </div>
+
+        <div class="cart-totals">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span id="subtotalAmount">Rs. 0.00</span>
+            </div>
+            <div class="total-row">
+                <span>Tax:</span>
+                <span id="taxAmount">Rs. 0.00</span>
+            </div>
+            <div class="total-row">
+                <span>Discount:</span>
+                <span id="discountAmount">Rs. 0.00</span>
+            </div>
+            <div class="total-row grand-total">
+                <span>TOTAL:</span>
+                <span id="totalAmount">Rs. 0.00</span>
+            </div>
+        </div>
+
+        <div class="payment-section">
+            <div class="form-group">
+                <label for="paymentAmount">
+                    <i class="fas fa-money-bill-wave"></i> Customer Payment:
+                </label>
+                <input type="number" id="paymentAmount" placeholder="0.00" step="0.01" min="0" 
+                       oninput="Controller.calculateBalance()">
+            </div>
+            <div class="balance-display" id="balanceDisplay" style="display:none;">
+                <div class="balance-row">
+                    <span>Change:</span>
+                    <span id="balanceAmount" class="balance-value">Rs. 0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-actions">
+            <button class="btn btn-clear" onclick="Controller.clearCart()">
+                <i class="fas fa-trash"></i> Clear
+            </button>
+            <button class="btn btn-print" onclick="Controller.printBill()">
+                <i class="fas fa-print"></i> Print Bill
+            </button>
+        </div>
+    </div>
+</div>

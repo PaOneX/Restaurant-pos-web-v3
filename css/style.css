@@ -153,11 +153,44 @@ body {
     width: 100%;
 }
 
-.page {
-    display: none;
+#app-root {
+    min-height: 60vh;
 }
 
-.page.active {
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.loading i {
+    margin-right: 1rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    font-size: 1.2rem;
+    color: var(--danger-color);
+}
+
+.error i {
+    margin-right: 1rem;
+    font-size: 2rem;
+}
+
+.page {
     display: block;
     animation: fadeIn 0.3s ease;
 }

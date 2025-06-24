@@ -1,0 +1,40 @@
+<!-- SETTINGS PAGE -->
+<h2><i class="fas fa-cog"></i> Settings</h2>
+
+<div class="card">
+    <h3>Restaurant Settings</h3>
+    <form id="settingsForm">
+        <div class="form-group">
+            <label for="restaurantName">Restaurant Name</label>
+            <input type="text" id="restaurantName" value="My Restaurant">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="taxRate">Tax Rate (%)</label>
+                <input type="number" id="taxRate" step="0.01" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label for="discountRate">Discount (%)</label>
+                <input type="number" id="discountRate" step="0.01" min="0" value="0">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Save Settings
+        </button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>System Information</h3>
+    <p><strong>Version:</strong> 1.0.0</p>
+    <p><strong>MVC Architecture:</strong> Model-View-Controller</p>
+    <p><strong>Storage:</strong> LocalStorage</p>
+    <p><strong>Functions:</strong> 40+ Core Functions</p>
+    <br>
+    <button type="button" class="btn btn-warning" onclick="Controller.resetProducts()">
+        <i class="fas fa-undo"></i> Reset Products to Default Menu
+    </button>
+    <p class="text-muted" style="margin-top: 0.5rem;">
+        This will restore all default menu items (28 products)
+    </p>
+</div>

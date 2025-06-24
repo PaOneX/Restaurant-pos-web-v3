@@ -493,24 +493,53 @@ const Controller = {
     // ========================================
 
     // 3️⃣9️⃣ & 4️⃣0️⃣ Show Page
-    showPage(pageName) {
-        View.showPage(pageName);
+    async showPage(pageName) {
+        // Update navigation
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('onclick')?.includes(pageName)) {
+                link.classList.add('active');
+            }
+        });
 
-        // Load data for specific pages
-        switch(pageName) {
-            case 'products':
-                this.loadProducts();
-                break;
-            case 'pos':
-                this.loadProductsToPOS();
-                this.renderCart();
-                break;
-            case 'orders':
-                this.loadOrders();
-                break;
-            case 'settings':
-                this.updateSettingsUI();
-                break;
+        // Load page content dynamically
+        const appRoot = document.getElementById('app-root');
+        if (!appRoot) return;
+
+        try {
+            // Show loading state
+            appRoot.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+            // Fetch page content
+            const response = await fetch(`pages/${pageName}.html`);
+            if (!response.ok) throw new Error('Page not found');
+            
+            const html = await response.text();
+            appRoot.innerHTML = html;
+
+            // Load data for specific pages after content is loaded
+            setTimeout(() => {
+                switch(pageName) {
+                    case 'products':
+                        this.loadProducts();
+                        break;
+                    case 'pos':
+                        this.loadProductsToPOS();
+                        this.renderCart();
+                        break;
+                    case 'orders':
+                        this.loadOrders();
+                        break;
+                    case 'settings':
+                        this.updateSettingsUI();
+                        break;
+                }
+            }, 100);
+
+        } catch (error) {
+            console.error('Error loading page:', error);
+            appRoot.innerHTML = '<div class="error"><i class="fas fa-exclamation-circle"></i> Error loading page. Please try again.</div>';
         }
     }
 };

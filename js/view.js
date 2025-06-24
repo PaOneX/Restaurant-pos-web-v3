@@ -337,26 +337,11 @@ const View = {
     // 6. PAGE NAVIGATION
     // ========================================
 
-    // 3️⃣9️⃣ Show Page
+    // Page navigation is now handled by Controller with dynamic loading
+    // Keeping this for backward compatibility
     showPage(pageName) {
-        // Hide all pages
-        const pages = document.querySelectorAll('.page');
-        pages.forEach(page => page.classList.remove('active'));
-
-        // Show selected page
-        const selectedPage = document.getElementById(pageName + 'Page');
-        if (selectedPage) {
-            selectedPage.classList.add('active');
-        }
-
-        // Update navigation
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('onclick')?.includes(pageName)) {
-                link.classList.add('active');
-            }
-        });
+        // This is now handled by Controller.showPage()
+        console.log('Page navigation:', pageName);
     },
 
     // ========================================
