@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #4f46e5;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Login Function Test</h1>
+    
+    <div class="test-box">
+        <h2>Test Login Credentials</h2>
+        <div>
+            <label>Username:</label>
+            <input type="text" id="testUsername" value="cashier">
+        </div>
+        <div>
+            <label>Password:</label>
+            <input type="password" id="testPassword" value="cashier123">
+        </div>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testAdminLogin()">Test Admin Login</button>
+        <div id="result" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Available Users</h2>
+        <div id="usersList"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Current User</h2>
+        <div id="currentUser"></div>
+        <button onclick="checkCurrentUser()">Check Current User</button>
+        <button onclick="logoutTest()">Logout</button>
+    </div>
+
+    <div class="test-box">
+        <h2>LocalStorage Data</h2>
+        <button onclick="showLocalStorage()">Show All LocalStorage</button>
+        <button onclick="clearUsers()">Clear Users Data</button>
+        <button onclick="clearAll()">Clear All Data</button>
+        <pre id="storageData" style="background: #f9f9f9; padding: 10px; border-radius: 4px;"></pre>
+    </div>
+
+    <script src="js/model.js"></script>
+    <script>
+        // Display available users
+        function showUsers() {
+            const users = Model.getFromLocalStorage('users') || [
+                { username: "admin", password: "admin123", role: "admin" },
+                { username: "cashier", password: "cashier123", role: "cashier" }
+            ];
+            document.getElementById('usersList').innerHTML = users.map(u => 
+                `<div>👤 ${u.username} / ${u.password} (${u.role})</div>`
+            ).join('');
+        }
+
+        function testLogin() {
+            const username = document.getElementById('testUsername').value.trim();
+            const password = document.getElementById('testPassword').value.trim();
+            
+            console.log('Testing login with:', { username, password });
+            
+            const user = Model.loginUser(username, password);
+            const resultDiv = document.getElementById('result');
+            
+            if (user) {
+                resultDiv.innerHTML = `<div class="success">✅ Login successful!<br>User: ${user.username}<br>Role: ${user.role}</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ Login failed! Invalid username or password</div>`;
+            }
+            
+            checkCurrentUser();
+        }
+
+        function testAdminLogin() {
+            document.getElementById('testUsername').value = 'admin';
+            document.getElementById('testPassword').value = 'admin123';
+            testLogin();
+        }
+
+        function checkCurrentUser() {
+            const current = Model.loadCurrentUser();
+            const div = document.getElementById('currentUser');
+            if (current) {
+                div.innerHTML = `<div class="success">✅ Logged in as: ${current.username} (${current.role})</div>`;
+            } else {
+                div.innerHTML = `<div class="error">❌ No user logged in</div>`;
+            }
+        }
+
+        function logoutTest() {
+            Model.logoutUser();
+            document.getElementById('result').innerHTML = '<div>Logged out</div>';
+            checkCurrentUser();
+        }
+
+        function showLocalStorage() {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                data[key] = localStorage.getItem(key);
+            }
+            document.getElementById('storageData').textContent = JSON.stringify(data, null, 2);
+        }
+
+        function clearUsers() {
+            localStorage.removeItem('users');
+            localStorage.removeItem('currentUser');
+            alert('Users data cleared');
+            showUsers();
+            checkCurrentUser();
+        }
+
+        function clearAll() {
+            if (confirm('Clear all localStorage?')) {
+                localStorage.clear();
+                alert('All data cleared');
+                showUsers();
+                checkCurrentUser();
+            }
+        }
+
+        // Initialize
+        showUsers();
+        checkCurrentUser();
+    </script>
+</body>
+</html>

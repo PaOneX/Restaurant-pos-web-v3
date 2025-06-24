@@ -19,13 +19,7 @@ const Controller = {
         Model.loadSettings();
         Model.loadCurrentUser();
 
-        // Initialize UI
-        this.loadProducts();
-        this.loadProductsToPOS();
-        this.renderCart();
-        this.updateSettingsUI();
-        
-        // Update user display
+        // Update user display and navigation
         View.updateUserDisplay(Model.currentUser);
 
         // Setup event listeners
@@ -457,18 +451,24 @@ const Controller = {
 
     // 2️⃣9️⃣ Login User
     loginUser() {
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        console.log('Login attempt with:', { username, password });
 
         const user = Model.loginUser(username, password);
         
         if (user) {
-            View.showAlert(`Welcome ${user.username}!`, 'success');
+            const roleMessage = user.role === 'admin' ? 'Full Access' : 'POS Access Only';
+            View.showAlert(`Welcome ${user.username}! (${roleMessage})`, 'success');
             View.updateUserDisplay(user);
             View.hideLoginForm();
             
             // Reset form
             document.getElementById('loginForm').reset();
+            
+            // Redirect to appropriate page
+            this.showPage('pos');
         } else {
             View.showAlert('Invalid username or password', 'error');
         }
@@ -480,6 +480,18 @@ const Controller = {
             Model.logoutUser();
             View.updateUserDisplay(null);
             View.showAlert('Logged out successfully', 'success');
+            
+            // Redirect to POS page (accessible to all)
+            this.showPage('pos');
+        }
+    },
+
+    // Clear localStorage for testing (useful for debugging)
+    clearAllData() {
+        if (View.showConfirm('This will delete all data including products, orders, and users. Continue?')) {
+            localStorage.clear();
+            View.showAlert('All data cleared. Page will reload.', 'success');
+            setTimeout(() => location.reload(), 1500);
         }
     },
 
@@ -494,6 +506,12 @@ const Controller = {
 
     // 3️⃣9️⃣ & 4️⃣0️⃣ Show Page
     async showPage(pageName) {
+        // Check permissions
+        if (!this.checkPageAccess(pageName)) {
+            View.showAlert('Access Denied! You do not have permission to access this page.', 'error');
+            return;
+        }
+
         // Update navigation
         const navLinks = document.querySelectorAll('.nav-link');
         navLinks.forEach(link => {
@@ -541,5 +559,24 @@ const Controller = {
             console.error('Error loading page:', error);
             appRoot.innerHTML = '<div class="error"><i class="fas fa-exclamation-circle"></i> Error loading page. Please try again.</div>';
         }
+    },
+
+    // Check if user has access to page
+    checkPageAccess(pageName) {
+        const user = Model.currentUser;
+        
+        // Define page permissions
+        const permissions = {
+            'pos': ['admin', 'cashier', null], // null means guest can access
+            'products': ['admin'],
+            'orders': ['admin'],
+            'settings': ['admin']
+        };
+        
+        const allowedRoles = permissions[pageName];
+        if (!allowedRoles) return true; // Allow if no restriction
+        
+        const userRole = user ? user.role : null;
+        return allowedRoles.includes(userRole);
     }
 };

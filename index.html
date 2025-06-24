@@ -12,51 +12,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <h1><i class="fas fa-utensils"></i> My Restaurant</h1>
-            <div class="header-right">
-                <span class="user-info">
-                    <i class="fas fa-user"></i>
-                    <span id="currentUser">Guest</span>
-                </span>
-                <button class="btn btn-login" onclick="Controller.showLogin()">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </button>
-                <button class="btn btn-logout" onclick="Controller.logoutUser()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </div>
-    </header>
+    
 
-    <!-- Navigation -->
-    <nav class="nav">
-        <button class="nav-link active" onclick="Controller.showPage('pos')">
-            <i class="fas fa-cash-register"></i>
-            <span>POS / Billing</span>
-        </button>
-        <button class="nav-link" onclick="Controller.showPage('products')">
-            <i class="fas fa-box"></i>
-            <span>Products</span>
-        </button>
-        <button class="nav-link" onclick="Controller.showPage('orders')">
-            <i class="fas fa-receipt"></i>
-            <span>Orders</span>
-        </button>
-        <button class="nav-link" onclick="Controller.showPage('settings')">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </button>
-    </nav>
-
-    <!-- Main Container -->
     <div class="container">
         
-        <!-- Root div where pages will be loaded -->
         <div id="app-root">
-            <!-- Page content will be dynamically loaded here -->
+
         </div>
 
     </div>
@@ -104,12 +65,10 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </button>
-                <p class="text-muted">Default: admin/admin or cashier/cashier</p>
             </form>
         </div>
     </div>
 
-    <!-- JavaScript Files (MVC Architecture) -->
     <script src="js/model.js"></script>
     <script src="js/view.js"></script>
     <script src="js/controller.js"></script>

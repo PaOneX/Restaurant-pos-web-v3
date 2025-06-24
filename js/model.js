@@ -543,13 +543,19 @@ const Model = {
   loginUser(username, password) {
     // Simple authentication (in real app, use server-side)
     const users = this.getFromLocalStorage("users") || [
-      { username: "admin", password: "admin", role: "admin" },
-      { username: "cashier", password: "cashier", role: "cashier" },
+      { username: "admin", password: "admin123", role: "admin" },
+      { username: "cashier", password: "cashier123", role: "cashier" },
     ];
+
+    console.log('Login attempt:', { username, password });
+    console.log('Available users:', users);
 
     const user = users.find(
       (u) => u.username === username && u.password === password,
     );
+    
+    console.log('Found user:', user);
+    
     if (user) {
       this.currentUser = { username: user.username, role: user.role };
       this.saveToLocalStorage("currentUser", this.currentUser);

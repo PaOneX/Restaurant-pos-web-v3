@@ -431,13 +431,49 @@ const View = {
 
     updateUserDisplay(user) {
         const userDisplay = document.getElementById('currentUser');
+        const loginBtn = document.querySelector('.btn-login');
+        const logoutBtn = document.querySelector('.btn-logout');
+        
         if (userDisplay) {
             if (user) {
                 userDisplay.textContent = `${user.username} (${user.role})`;
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = 'inline-flex';
             } else {
                 userDisplay.textContent = 'Guest';
+                if (loginBtn) loginBtn.style.display = 'inline-flex';
+                if (logoutBtn) logoutBtn.style.display = 'none';
             }
         }
+        
+        // Update navigation based on role
+        this.updateNavigationForRole(user ? user.role : null);
+    },
+
+    updateNavigationForRole(role) {
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            const allowedRoles = link.getAttribute('data-role');
+            
+            if (!allowedRoles) {
+                link.style.display = 'flex';
+                return;
+            }
+            
+            if (!role) {
+                // Guest user - hide all except POS
+                if (allowedRoles.includes('cashier')) {
+                    link.style.display = 'flex';
+                } else {
+                    link.style.display = 'none';
+                }
+            } else if (allowedRoles.includes(role)) {
+                link.style.display = 'flex';
+            } else {
+                link.style.display = 'none';
+            }
+        });
     },
 
     showLoginForm() {

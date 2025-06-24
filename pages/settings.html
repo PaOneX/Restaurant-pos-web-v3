@@ -1,4 +1,41 @@
-<!-- SETTINGS PAGE -->
+<!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1><i class="fas fa-utensils"></i> My Restaurant</h1>
+            <div class="header-right">
+                <span class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="currentUser">Guest</span>
+                </span>
+                <button class="btn btn-login" onclick="Controller.showLogin()">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <button class="btn btn-logout" onclick="Controller.logoutUser()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <button class="nav-link" onclick="Controller.showPage('pos')" data-role="admin,cashier">
+            <i class="fas fa-cash-register"></i>
+            <span>POS / Billing</span>
+        </button>
+        <button class="nav-link" onclick="Controller.showPage('products')" data-role="admin">
+            <i class="fas fa-box"></i>
+            <span>Products</span>
+        </button>
+        <button class="nav-link" onclick="Controller.showPage('orders')" data-role="admin">
+            <i class="fas fa-receipt"></i>
+            <span>Orders</span>
+        </button>
+        <button class="nav-link active" onclick="Controller.showPage('settings')" data-role="admin">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </button>
+    </nav><!-- SETTINGS PAGE -->
 <h2><i class="fas fa-cog"></i> Settings</h2>
 
 <div class="card">
