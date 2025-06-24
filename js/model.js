@@ -660,12 +660,10 @@ const Model = {
   loginUser(username, password) {
     // Simple authentication (in real app, use server-side)
     const users = this.getFromLocalStorage("users") || [
-      { username: "admin", password: "admin123", role: "admin" },
+      { username: "admin", password: "123", role: "admin" },
       { username: "cashier", password: "cashier123", role: "cashier" },
     ];
 
-    console.log('Login attempt:', { username, password });
-    console.log('Available users:', users);
 
     const user = users.find(
       (u) => u.username === username && u.password === password,
