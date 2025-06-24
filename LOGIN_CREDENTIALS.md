@@ -4,7 +4,7 @@
 
 ### Admin Account
 - **Username:** `admin`
-- **Password:** `admin123`
+- **Password:** `123`
 - **Access Level:** Full Access
   - POS / Billing ✓
   - Products Management ✓
