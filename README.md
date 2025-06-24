@@ -2,9 +2,7 @@
 
 A fully functional Point of Sale (POS) system built with **MVC Architecture** and pure JavaScript (no frameworks).
 
-## 🎯 Features
 
-### ✅ 40+ Core Functions Implemented
 
 1. **System Initialization & Storage** (3 functions)
    - `initSystem()` - Initialize system on page load
@@ -67,7 +65,7 @@ A fully functional Point of Sale (POS) system built with **MVC Architecture** an
     - `showPage()` - Navigate between pages
     - `hideAllPages()` - UI control
 
-## 🏗️ MVC Architecture
+##  MVC Architecture
 
 ### Model (`js/model.js`)
 - Data management layer
@@ -92,7 +90,7 @@ A fully functional Point of Sale (POS) system built with **MVC Architecture** an
 - System initialization
 - Global event handlers
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Restaurant/
@@ -108,7 +106,7 @@ Restaurant/
 └── README.md
 ```
 
-## 🚀 How to Use
+##  How to Use
 
 ### 1. Open the Application
 - Open `index.html` in a web browser
@@ -145,7 +143,7 @@ Restaurant/
 - Set tax rate (%)
 - Set discount rate (%)
 
-## 💾 Data Storage
+##  Data Storage
 
 All data is stored in **browser LocalStorage**:
 - Products
@@ -158,18 +156,18 @@ Data persists between sessions until manually cleared.
 
 ## 🎨 Features Highlight
 
-✅ **Responsive Design** - Works on desktop, tablet, mobile  
-✅ **Real-time Updates** - Instant UI updates  
-✅ **Print Functionality** - Professional receipt printing  
-✅ **User Authentication** - Admin and cashier roles  
-✅ **Search & Filter** - Fast product lookup  
-✅ **Tax & Discount** - Automatic calculations  
-✅ **Order History** - Complete transaction records  
-✅ **Data Persistence** - LocalStorage integration  
-✅ **Clean UI** - Modern, intuitive interface  
-✅ **No Dependencies** - Pure JavaScript, no frameworks  
+ **Responsive Design** - Works on desktop, tablet, mobile  
+ **Real-time Updates** - Instant UI updates  
+ **Print Functionality** - Professional receipt printing  
+ **User Authentication** - Admin and cashier roles  
+ **Search & Filter** - Fast product lookup  
+ **Tax & Discount** - Automatic calculations  
+ **Order History** - Complete transaction records  
+ **Data Persistence** - LocalStorage integration  
+ **Clean UI** - Modern, intuitive interface  
+ **No Dependencies** - Pure JavaScript, no frameworks  
 
-## 🔧 Technologies Used
+##  Technologies Used
 
 - **HTML5** - Structure
 - **CSS3** - Styling & animations
@@ -177,7 +175,7 @@ Data persists between sessions until manually cleared.
 - **Font Awesome** - Icons
 - **LocalStorage API** - Data persistence
 
-## 📱 Browser Compatibility
+##  Browser Compatibility
 
 - Chrome (recommended)
 - Firefox
@@ -185,24 +183,24 @@ Data persists between sessions until manually cleared.
 - Edge
 - Opera
 
-## 🎯 Business Use Cases
+##  Business Use Cases
 
-✅ Small restaurants  
-✅ Cafes & coffee shops  
-✅ Food trucks  
-✅ Bakeries  
-✅ Fast food outlets  
-✅ Retail stores  
-✅ Pop-up shops  
+ Small restaurants  
+ Cafes & coffee shops  
+ Food trucks  
+ Bakeries  
+ Fast food outlets  
+ Retail stores  
+ Pop-up shops  
 
-## 📝 License
+##  License
 
 This project is open source and available for educational purposes.
 
-## 👨‍💻 Developer
+## 👨 Developer
 
-Built with ❤️ using pure JavaScript and MVC Architecture
+Built with  using pure JavaScript and MVC Architecture
 
 ---
 
-**Enjoy your fully functional Restaurant POS System!** 🍽️
+**Enjoy your fully functional Restaurant POS System!** 
