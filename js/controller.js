@@ -568,6 +568,16 @@ const Controller = {
         View.showAlert('Settings updated successfully!', 'success');
         this.updateSettingsUI();
         this.renderCart(); // Update totals
+        this.updateRestaurantNameInHeader(); // Update header name
+    },
+
+    // Update restaurant name in the header
+    updateRestaurantNameInHeader() {
+        const settings = Model.getSettings();
+        const headerTitle = document.querySelector('.header h1');
+        if (headerTitle) {
+            headerTitle.innerHTML = `<i class="fas fa-utensils"></i> ${settings.restaurantName}`;
+        }
     },
 
     // Reset products to default menu
@@ -728,18 +738,22 @@ const Controller = {
                     case 'products':
                         this.loadProducts();
                         this.setupProductsPageListeners();
+                        this.updateRestaurantNameInHeader();
                         break;
                     case 'pos':
                         this.loadProductsToPOS();
                         this.renderCart();
                         this.setupPOSPageListeners();
+                        this.updateRestaurantNameInHeader();
                         break;
                     case 'orders':
                         this.loadOrders();
+                        this.updateRestaurantNameInHeader();
                         break;
                     case 'settings':
                         this.updateSettingsUI();
                         this.setupSettingsPageListeners();
+                        this.updateRestaurantNameInHeader();
                         break;
                 }
             }, 100);
