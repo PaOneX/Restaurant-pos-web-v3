@@ -19,6 +19,14 @@ const Model = {
   paymentAmount: 0,
   orderCounter: 1,
 
+  // Category hierarchy
+  categoryHierarchy: {
+    "Sri Lankan": ["Fried Rice", "Kottu", "Set Menu"],
+    "International": ["Pasta", "Noodles", "Pizza"],
+    "Beverages": ["Hot Drinks", "Cold Drinks", "Juices"],
+    "Meat": ["Chicken", "Beef", "Seafood"]
+  },
+
   // ========================================
   // 1. STORAGE FUNCTIONS
   // ========================================
@@ -183,79 +191,90 @@ const Model = {
       {
         id: "18",
         name: "Chicken Noodles",
-        category: "Noodles",
+        mainCategory: "International",
+        subCategory: "Noodles",
         price: 850,
         stock: 35,
       },
       {
         id: "19",
         name: "Seafood Noodles",
-        category: "Noodles",
+        mainCategory: "International",
+        subCategory: "Noodles",
         price: 950,
         stock: 30,
       },
       {
         id: "20",
         name: "Mixed Noodles",
-        category: "Noodles",
+        mainCategory: "International",
+        subCategory: "Noodles",
         price: 1000,
         stock: 25,
       },
 
-      // ðŸ¥¤ Beverages
+      // Beverages - Cold Drinks
       {
         id: "21",
         name: "Coca Cola",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Cold Drinks",
         price: 150,
         stock: 100,
       },
       {
         id: "22",
         name: "Sprite",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Cold Drinks",
         price: 150,
         stock: 100,
       },
       {
         id: "23",
         name: "Fanta",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Cold Drinks",
         price: 150,
         stock: 100,
       },
       {
         id: "24",
         name: "Water Bottle",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Cold Drinks",
         price: 100,
         stock: 150,
       },
       {
         id: "25",
         name: "Fresh Lime Juice",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Juices",
         price: 200,
         stock: 60,
       },
       {
         id: "26",
         name: "Iced Coffee",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Hot Drinks",
         price: 300,
         stock: 50,
       },
       {
         id: "27",
         name: "Milk Shake",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Cold Drinks",
         price: 400,
         stock: 40,
       },
       {
         id: "28",
         name: "Orange Juice",
-        category: "Beverages",
+        mainCategory: "Beverages",
+        subCategory: "Juices",
         price: 250,
         stock: 60,
       },
@@ -314,24 +333,41 @@ const Model = {
     return false;
   },
 
-  // ðŸ”Ÿ Search Products
+  // 📟 Search Products
   searchProducts(query) {
     if (!query) return this.products;
     const lowerQuery = query.toLowerCase();
     return this.products.filter(
       (p) =>
         p.name.toLowerCase().includes(lowerQuery) ||
-        p.category.toLowerCase().includes(lowerQuery),
+        (p.mainCategory && p.mainCategory.toLowerCase().includes(lowerQuery)) ||
+        (p.subCategory && p.subCategory.toLowerCase().includes(lowerQuery)) ||
+        (p.category && p.category.toLowerCase().includes(lowerQuery)),
     );
   },
 
-  // 2ï¸âƒ£7ï¸âƒ£ Filter by Category
+  // 2️⃣7️⃣ Filter by Category
   filterByCategory(category) {
     if (!category || category === "All") return this.products;
-    return this.products.filter((p) => p.category === category);
+    // Check if it's a main category or subcategory
+    return this.products.filter((p) => 
+      p.mainCategory === category || 
+      p.subCategory === category ||
+      p.category === category
+    );
   },
 
-  // 2ï¸âƒ£8ï¸âƒ£ Sort by Price
+  // Filter by main category and subcategory
+  filterByHierarchy(mainCategory, subCategory) {
+    if (!mainCategory || mainCategory === "All") return this.products;
+    let filtered = this.products.filter((p) => p.mainCategory === mainCategory);
+    if (subCategory && subCategory !== "All") {
+      filtered = filtered.filter((p) => p.subCategory === subCategory);
+    }
+    return filtered;
+  },
+
+  // 2️⃣8️⃣ Sort by Price
   sortByPrice(order = "asc") {
     const sorted = [...this.products];
     return sorted.sort((a, b) =>
@@ -339,15 +375,203 @@ const Model = {
     );
   },
 
-  // Get unique categories
+  // Get unique categories (legacy support)
   getCategories() {
     const categories = ["All"];
     this.products.forEach((p) => {
-      if (!categories.includes(p.category)) {
-        categories.push(p.category);
+      const cat = p.subCategory || p.category;
+      if (cat && !categories.includes(cat)) {
+        categories.push(cat);
       }
     });
     return categories;
+  },
+
+  // Get main categories
+  getMainCategories() {
+    return ["All", ...Object.keys(this.categoryHierarchy)];
+  },
+
+  // Get subcategories for a main category
+  getSubCategories(mainCategory) {
+    if (!mainCategory || mainCategory === "All") {
+      return ["All"];
+    }
+    return ["All", ...(this.categoryHierarchy[mainCategory] || [])];
+  },
+
+  // Get all subcategories from products
+  getAllSubCategories() {
+    const subCategories = ["All"];
+    this.products.forEach((p) => {
+      const subCat = p.subCategory;
+      if (subCat && !subCategories.includes(subCat)) {
+        subCategories.push(subCat);
+      }
+    });
+    return subCategories;
+  },
+
+  // Load category hierarchy from storage
+  loadCategoryHierarchy() {
+    const stored = this.getFromLocalStorage("categoryHierarchy");
+    if (stored) {
+      this.categoryHierarchy = stored;
+    }
+    return this.categoryHierarchy;
+  },
+
+  // Save category hierarchy to storage
+  saveCategoryHierarchy() {
+    return this.saveToLocalStorage("categoryHierarchy", this.categoryHierarchy);
+  },
+
+  // Add main category
+  addMainCategory(mainCategory) {
+    if (!mainCategory || mainCategory.trim().length === 0) {
+      return { success: false, error: "Main category name is required" };
+    }
+    
+    const trimmed = mainCategory.trim();
+    if (this.categoryHierarchy[trimmed]) {
+      return { success: false, error: "Main category already exists" };
+    }
+    
+    this.categoryHierarchy[trimmed] = [];
+    this.saveCategoryHierarchy();
+    return { success: true };
+  },
+
+  // Add subcategory to main category
+  addSubCategory(mainCategory, subCategory) {
+    if (!mainCategory || !subCategory) {
+      return { success: false, error: "Both main and sub category are required" };
+    }
+    
+    if (!this.categoryHierarchy[mainCategory]) {
+      return { success: false, error: "Main category does not exist" };
+    }
+    
+    const trimmedSub = subCategory.trim();
+    if (this.categoryHierarchy[mainCategory].includes(trimmedSub)) {
+      return { success: false, error: "Sub category already exists" };
+    }
+    
+    this.categoryHierarchy[mainCategory].push(trimmedSub);
+    this.saveCategoryHierarchy();
+    return { success: true };
+  },
+
+  // Delete main category
+  deleteMainCategory(mainCategory) {
+    if (!this.categoryHierarchy[mainCategory]) {
+      return { success: false, error: "Main category does not exist" };
+    }
+    
+    // Check if any products use this category
+    const productsUsingCategory = this.products.filter(p => p.mainCategory === mainCategory);
+    if (productsUsingCategory.length > 0) {
+      return { success: false, error: `Cannot delete. ${productsUsingCategory.length} products use this category` };
+    }
+    
+    delete this.categoryHierarchy[mainCategory];
+    this.saveCategoryHierarchy();
+    return { success: true };
+  },
+
+  // Delete subcategory
+  deleteSubCategory(mainCategory, subCategory) {
+    if (!this.categoryHierarchy[mainCategory]) {
+      return { success: false, error: "Main category does not exist" };
+    }
+    
+    const index = this.categoryHierarchy[mainCategory].indexOf(subCategory);
+    if (index === -1) {
+      return { success: false, error: "Sub category does not exist" };
+    }
+    
+    // Check if any products use this subcategory
+    const productsUsingSubCat = this.products.filter(
+      p => p.mainCategory === mainCategory && p.subCategory === subCategory
+    );
+    if (productsUsingSubCat.length > 0) {
+      return { success: false, error: `Cannot delete. ${productsUsingSubCat.length} products use this sub category` };
+    }
+    
+    this.categoryHierarchy[mainCategory].splice(index, 1);
+    this.saveCategoryHierarchy();
+    return { success: true };
+  },
+
+  // Rename main category
+  renameMainCategory(oldName, newName) {
+    if (!oldName || !newName) {
+      return { success: false, error: "Both old and new names are required" };
+    }
+    
+    if (!this.categoryHierarchy[oldName]) {
+      return { success: false, error: "Main category does not exist" };
+    }
+    
+    const trimmedNew = newName.trim();
+    if (this.categoryHierarchy[trimmedNew] && trimmedNew !== oldName) {
+      return { success: false, error: "New category name already exists" };
+    }
+    
+    // Update category hierarchy
+    this.categoryHierarchy[trimmedNew] = this.categoryHierarchy[oldName];
+    delete this.categoryHierarchy[oldName];
+    
+    // Update all products using this category
+    this.products.forEach(p => {
+      if (p.mainCategory === oldName) {
+        p.mainCategory = trimmedNew;
+      }
+    });
+    
+    this.saveCategoryHierarchy();
+    this.saveToLocalStorage("products", this.products);
+    return { success: true };
+  },
+
+  // Rename subcategory
+  renameSubCategory(mainCategory, oldName, newName) {
+    if (!mainCategory || !oldName || !newName) {
+      return { success: false, error: "All fields are required" };
+    }
+    
+    if (!this.categoryHierarchy[mainCategory]) {
+      return { success: false, error: "Main category does not exist" };
+    }
+    
+    const index = this.categoryHierarchy[mainCategory].indexOf(oldName);
+    if (index === -1) {
+      return { success: false, error: "Sub category does not exist" };
+    }
+    
+    const trimmedNew = newName.trim();
+    if (this.categoryHierarchy[mainCategory].includes(trimmedNew) && trimmedNew !== oldName) {
+      return { success: false, error: "New sub category name already exists" };
+    }
+    
+    // Update subcategory in hierarchy
+    this.categoryHierarchy[mainCategory][index] = trimmedNew;
+    
+    // Update all products using this subcategory
+    this.products.forEach(p => {
+      if (p.mainCategory === mainCategory && p.subCategory === oldName) {
+        p.subCategory = trimmedNew;
+      }
+    });
+    
+    this.saveCategoryHierarchy();
+    this.saveToLocalStorage("products", this.products);
+    return { success: true };
+  },
+
+  // Get category hierarchy
+  getCategoryHierarchy() {
+    return this.categoryHierarchy;
   },
 
   // ========================================

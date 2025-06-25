@@ -14,7 +14,7 @@ const View = {
         if (!tbody) return;
 
         if (products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No products found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No products found</td></tr>';
             return;
         }
 
@@ -22,7 +22,8 @@ const View = {
             <tr>
                 <td>${Security.escapeHTML(product.id)}</td>
                 <td>${Security.escapeHTML(product.name)}</td>
-                <td>${Security.escapeHTML(product.category)}</td>
+                <td>${Security.escapeHTML(product.mainCategory || product.category || 'N/A')}</td>
+                <td>${Security.escapeHTML(product.subCategory || 'N/A')}</td>
                 <td>${Model.formatCurrency(product.price)}</td>
                 <td>${product.stock}</td>
                 <td>
@@ -53,14 +54,48 @@ const View = {
                     <i class="fas fa-utensils"></i>
                 </div>
                 <h4>${product.name}</h4>
-                <p class="category">${product.category}</p>
+                <p class="category">${product.subCategory || product.category || 'Uncategorized'}</p>
                 <p class="price">${Model.formatCurrency(product.price)}</p>
                 <p class="stock">Stock: ${product.stock}</p>
             </div>
         `).join('');
     },
 
-    // Render POS Category Filters
+    // Render POS Main Category Filters
+    renderPOSMainCategoryFilters(selectedMainCategory = 'All') {
+        const container = document.getElementById('mainCategoryFilters');
+        if (!container) return;
+
+        const mainCategories = Model.getMainCategories();
+        container.innerHTML = mainCategories.map(cat => `
+            <button class="category-btn ${cat === selectedMainCategory ? 'active' : ''}" 
+                    onclick="Controller.filterPOSByMainCategory('${cat}')">
+                <i class="fas fa-${this.getMainCategoryIcon(cat)}"></i>
+                <span>${cat}</span>
+            </button>
+        `).join('');
+    },
+
+    // Render POS Sub Category Filters
+    renderPOSSubCategoryFilters(mainCategory, selectedSubCategory = 'All') {
+        const container = document.getElementById('subCategoryFilters');
+        if (!container) return;
+
+        if (!mainCategory || mainCategory === 'All') {
+            container.innerHTML = '';
+            return;
+        }
+
+        const subCategories = Model.getSubCategories(mainCategory);
+        container.innerHTML = subCategories.map(cat => `
+            <button class="category-btn ${cat === selectedSubCategory ? 'active' : ''}" 
+                    onclick="Controller.filterPOSBySubCategory('${cat}')">
+                <span>${cat}</span>
+            </button>
+        `).join('');
+    },
+
+    // Render POS Category Filters (legacy support)
     renderPOSCategoryFilters(categories, selectedCategory = 'All') {
         const container = document.getElementById('categoryFilters');
         if (!container) return;
@@ -72,6 +107,18 @@ const View = {
                 <span>${cat}</span>
             </button>
         `).join('');
+    },
+
+    // Get icon for main category
+    getMainCategoryIcon(category) {
+        const icons = {
+            'All': 'th',
+            'Sri Lankan': 'flag',
+            'International': 'globe',
+            'Beverages': 'mug-hot',
+            'Meat': 'drumstick-bite'
+        };
+        return icons[category] || 'utensils';
     },
 
     // Get icon for category
@@ -95,6 +142,53 @@ const View = {
         select.innerHTML = categories.map(cat => 
             `<option value="${cat}">${cat}</option>`
         ).join('');
+    },
+
+    // Populate main category dropdowns
+    populateMainCategoryDropdowns() {
+        const mainCategories = Model.getMainCategories();
+        
+        // Product form dropdown
+        const formSelect = document.getElementById('productMainCategory');
+        if (formSelect) {
+            formSelect.innerHTML = '<option value="">Select Main Category</option>' +
+                mainCategories.filter(cat => cat !== 'All').map(cat => 
+                    `<option value="${cat}">${cat}</option>`
+                ).join('');
+        }
+        
+        // Filter dropdown
+        const filterSelect = document.getElementById('mainCategoryFilter');
+        if (filterSelect) {
+            filterSelect.innerHTML = mainCategories.map(cat => 
+                `<option value="${cat}">${cat}</option>`
+            ).join('');
+        }
+    },
+
+    // Populate subcategory dropdown based on main category
+    populateSubCategoryDropdown(mainCategory, selectedSubCategory = '') {
+        const subCategories = Model.getSubCategories(mainCategory);
+        const formSelect = document.getElementById('productSubCategory');
+        
+        if (formSelect) {
+            formSelect.innerHTML = '<option value="">Select Sub Category</option>' +
+                subCategories.filter(cat => cat !== 'All').map(cat => 
+                    `<option value="${cat}" ${cat === selectedSubCategory ? 'selected' : ''}>${cat}</option>`
+                ).join('');
+        }
+    },
+
+    // Populate all subcategories filter
+    populateAllSubCategoriesFilter() {
+        const subCategories = Model.getAllSubCategories();
+        const filterSelect = document.getElementById('subCategoryFilter');
+        
+        if (filterSelect) {
+            filterSelect.innerHTML = subCategories.map(cat => 
+                `<option value="${cat}">${cat}</option>`
+            ).join('');
+        }
     },
 
     // ========================================
@@ -340,6 +434,55 @@ const View = {
         if (header) header.textContent = settings.restaurantName;
     },
 
+    // Render Category Management
+    renderCategoryManagement() {
+        const container = document.getElementById('categoryList');
+        if (!container) return;
+
+        const hierarchy = Model.getCategoryHierarchy();
+        const mainCategories = Object.keys(hierarchy);
+
+        if (mainCategories.length === 0) {
+            container.innerHTML = '<p class="text-muted">No categories yet. Add your first main category above.</p>';
+            return;
+        }
+
+        container.innerHTML = mainCategories.map(mainCat => `
+            <div class="category-main-item">
+                <div class="category-main-header">
+                    <h5>
+                        <i class="fas fa-folder"></i>
+                        ${mainCat}
+                    </h5>
+                    <div class="category-main-actions">
+                        <button class="btn-icon" onclick="Controller.renameMainCategory('${mainCat}')" title="Rename">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon btn-delete" onclick="Controller.deleteMainCategory('${mainCat}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="category-sub-list">
+                    ${hierarchy[mainCat].length === 0 
+                        ? '<span class="text-muted" style="font-size: 0.9rem;">No subcategories</span>'
+                        : hierarchy[mainCat].map(subCat => `
+                            <div class="category-sub-item">
+                                <span>${subCat}</span>
+                                <button class="btn-icon" onclick="Controller.renameSubCategory('${mainCat}', '${subCat}')" title="Rename">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon btn-delete" onclick="Controller.deleteSubCategory('${mainCat}', '${subCat}')" title="Delete">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `).join('')
+                    }
+                </div>
+            </div>
+        `).join('');
+    },
+
     // ========================================
     // 6. PAGE NAVIGATION
     // ========================================
@@ -359,14 +502,25 @@ const View = {
     fillProductForm(product) {
         document.getElementById('productId').value = product.id;
         document.getElementById('productName').value = product.name;
-        document.getElementById('productCategory').value = product.category;
+        
+        // Handle both old and new category system
+        if (product.mainCategory && product.subCategory) {
+            document.getElementById('productMainCategory').value = product.mainCategory;
+            View.populateSubCategoryDropdown(product.mainCategory, product.subCategory);
+            document.getElementById('productSubCategory').value = product.subCategory;
+        } else if (product.category) {
+            // Legacy category - try to map to new system
+            document.getElementById('productMainCategory').value = '';
+            document.getElementById('productSubCategory').value = '';
+        }
+        
         document.getElementById('productPrice').value = product.price;
         document.getElementById('productStock').value = product.stock;
 
         // Change button text
         const submitBtn = document.querySelector('#productForm button[type="submit"]');
         if (submitBtn) {
-            submitBtn.textContent = 'Update Product';
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Product';
             submitBtn.classList.add('btn-update');
         }
     },
@@ -375,11 +529,17 @@ const View = {
     clearProductForm() {
         document.getElementById('productForm').reset();
         document.getElementById('productId').value = '';
+        
+        // Clear subcategory dropdown
+        const subCatSelect = document.getElementById('productSubCategory');
+        if (subCatSelect) {
+            subCatSelect.innerHTML = '<option value="">Select Sub Category</option>';
+        }
 
         // Reset button
         const submitBtn = document.querySelector('#productForm button[type="submit"]');
         if (submitBtn) {
-            submitBtn.textContent = 'Add Product';
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Add Product';
             submitBtn.classList.remove('btn-update');
         }
     },

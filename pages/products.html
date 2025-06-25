@@ -46,15 +46,25 @@
                 <input type="text" id="productName" required>
             </div>
             <div class="form-group">
-                <label for="productCategory">Category *</label>
-                <input type="text" id="productCategory" required>
+                <label for="productMainCategory">Main Category *</label>
+                <select id="productMainCategory" required onchange="Controller.updateSubCategoryDropdown()">
+                    <option value="">Select Main Category</option>
+                </select>
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label for="productSubCategory">Sub Category *</label>
+                <select id="productSubCategory" required>
+                    <option value="">Select Sub Category</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="productPrice">Price (Rs.) *</label>
                 <input type="number" id="productPrice" step="0.01" min="0" required>
             </div>
+        </div>
+        <div class="form-row">
             <div class="form-group">
                 <label for="productStock">Stock Quantity</label>
                 <input type="number" id="productStock" min="0" value="0">
@@ -77,8 +87,11 @@
         <h3>Products List</h3>
         <div class="table-filters">
             <input type="text" id="searchProduct" placeholder="Search...">
-            <select id="categoryFilter">
-                <option value="All">All Categories</option>
+            <select id="mainCategoryFilter" onchange="Controller.filterByMainCategory()">
+                <option value="All">All Main Categories</option>
+            </select>
+            <select id="subCategoryFilter" onchange="Controller.filterBySubCategory()">
+                <option value="All">All Sub Categories</option>
             </select>
         </div>
     </div>
@@ -88,7 +101,8 @@
                 <tr>
                     <th>ID</th>
                     <th>Name</th>
-                    <th>Category</th>
+                    <th>Main Category</th>
+                    <th>Sub Category</th>
                     <th>Price</th>
                     <th>Stock</th>
                     <th>Actions</th>

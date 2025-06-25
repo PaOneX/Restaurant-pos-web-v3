@@ -145,16 +145,17 @@ const Controller = {
         const products = Model.getAllProducts();
         View.renderProductsTable(products);
         
-        // Update category filter
-        const categories = Model.getCategories();
-        View.renderCategoryFilter(categories);
+        // Populate category dropdowns
+        View.populateMainCategoryDropdowns();
+        View.populateAllSubCategoriesFilter();
     },
 
     //  Add Product
     addProduct() {
         const productData = {
             name: document.getElementById('productName').value,
-            category: document.getElementById('productCategory').value,
+            mainCategory: document.getElementById('productMainCategory').value,
+            subCategory: document.getElementById('productSubCategory').value,
             price: document.getElementById('productPrice').value,
             stock: document.getElementById('productStock').value
         };
@@ -193,7 +194,8 @@ const Controller = {
         
         const productData = {
             name: document.getElementById('productName').value,
-            category: document.getElementById('productCategory').value,
+            mainCategory: document.getElementById('productMainCategory').value,
+            subCategory: document.getElementById('productSubCategory').value,
             price: document.getElementById('productPrice').value,
             stock: document.getElementById('productStock').value
         };
@@ -289,13 +291,53 @@ const Controller = {
     //  Load Products to POS
     loadProductsToPOS() {
         const products = Model.getAllProducts();
-        const categories = Model.getCategories();
         View.renderProductsGrid(products);
-        View.renderPOSCategoryFilters(categories);
-        this.currentPOSCategory = 'All';
+        View.renderPOSMainCategoryFilters('All');
+        View.renderPOSSubCategoryFilters(null);
+        this.currentPOSMainCategory = 'All';
+        this.currentPOSSubCategory = 'All';
     },
 
-    // Filter POS by Category
+    // Filter POS by Main Category
+    filterPOSByMainCategory(mainCategory) {
+        this.currentPOSMainCategory = mainCategory;
+        this.currentPOSSubCategory = 'All';
+        
+        const searchQuery = document.getElementById('posSearch')?.value || '';
+        let products = Model.filterByCategory(mainCategory);
+        
+        // Apply search filter if there's a search query
+        if (searchQuery) {
+            products = products.filter(p => 
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        
+        View.renderProductsGrid(products);
+        View.renderPOSMainCategoryFilters(mainCategory);
+        View.renderPOSSubCategoryFilters(mainCategory, 'All');
+    },
+
+    // Filter POS by Sub Category
+    filterPOSBySubCategory(subCategory) {
+        this.currentPOSSubCategory = subCategory;
+        const mainCategory = this.currentPOSMainCategory || 'All';
+        
+        const searchQuery = document.getElementById('posSearch')?.value || '';
+        let products = Model.filterByHierarchy(mainCategory, subCategory);
+        
+        // Apply search filter if there's a search query
+        if (searchQuery) {
+            products = products.filter(p => 
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        
+        View.renderProductsGrid(products);
+        View.renderPOSSubCategoryFilters(mainCategory, subCategory);
+    },
+
+    // Filter POS by Category (legacy support)
     filterPOSByCategory(category) {
         this.currentPOSCategory = category;
         const searchQuery = document.getElementById('posSearch')?.value || '';
@@ -315,8 +357,9 @@ const Controller = {
 
     // Search in POS
     searchProductsInPOS(query) {
-        const category = this.currentPOSCategory || 'All';
-        let products = Model.filterByCategory(category);
+        const mainCategory = this.currentPOSMainCategory || 'All';
+        const subCategory = this.currentPOSSubCategory || 'All';
+        let products = Model.filterByHierarchy(mainCategory, subCategory);
         
         if (query) {
             products = products.filter(p => 
@@ -325,6 +368,57 @@ const Controller = {
         }
         
         View.renderProductsGrid(products);
+    },
+
+    // Update subcategory dropdown when main category changes
+    updateSubCategoryDropdown() {
+        const mainCategory = document.getElementById('productMainCategory')?.value;
+        if (mainCategory) {
+            View.populateSubCategoryDropdown(mainCategory);
+        }
+    },
+
+    // Filter products by main category
+    filterByMainCategory() {
+        const mainCategory = document.getElementById('mainCategoryFilter')?.value || 'All';
+        const subCategory = document.getElementById('subCategoryFilter')?.value || 'All';
+        
+        // Update subcategory filter options
+        if (mainCategory === 'All') {
+            View.populateAllSubCategoriesFilter();
+        } else {
+            const subCategories = Model.getSubCategories(mainCategory);
+            const filterSelect = document.getElementById('subCategoryFilter');
+            if (filterSelect) {
+                filterSelect.innerHTML = subCategories.map(cat => 
+                    `<option value="${cat}">${cat}</option>`
+                ).join('');
+            }
+        }
+        
+        this.filterProducts();
+    },
+
+    // Filter products by subcategory
+    filterBySubCategory() {
+        this.filterProducts();
+    },
+
+    // Apply all filters
+    filterProducts() {
+        const searchQuery = document.getElementById('searchProduct')?.value || '';
+        const mainCategory = document.getElementById('mainCategoryFilter')?.value || 'All';
+        const subCategory = document.getElementById('subCategoryFilter')?.value || 'All';
+        
+        let products = Model.filterByHierarchy(mainCategory, subCategory);
+        
+        if (searchQuery) {
+            products = products.filter(p =>
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+        
+        View.renderProductsTable(products);
     },
 
     //  Add to Cart
@@ -589,6 +683,137 @@ const Controller = {
         this.updateRestaurantNameInHeader(); // Update header name
     },
 
+    // Category Management Functions
+    loadCategoryManagement() {
+        Model.loadCategoryHierarchy();
+        View.renderCategoryManagement();
+        this.populateCategoryDropdowns();
+    },
+
+    populateCategoryDropdowns() {
+        const mainCategories = Model.getMainCategories().filter(c => c !== 'All');
+        const select = document.getElementById('mainCategoryForSub');
+        if (select) {
+            select.innerHTML = '<option value="">Select Main Category</option>' +
+                mainCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+    },
+
+    addMainCategory() {
+        const input = document.getElementById('newMainCategory');
+        const categoryName = input?.value.trim();
+        
+        if (!categoryName) {
+            View.showAlert('Please enter a category name', 'error');
+            return;
+        }
+
+        const result = Model.addMainCategory(categoryName);
+        if (result.success) {
+            View.showAlert('Main category added successfully!', 'success');
+            input.value = '';
+            this.loadCategoryManagement();
+            View.populateMainCategoryDropdowns();
+        } else {
+            View.showAlert(result.error, 'error');
+        }
+    },
+
+    addSubCategory() {
+        const mainCatSelect = document.getElementById('mainCategoryForSub');
+        const subCatInput = document.getElementById('newSubCategory');
+        
+        const mainCategory = mainCatSelect?.value;
+        const subCategory = subCatInput?.value.trim();
+
+        if (!mainCategory) {
+            View.showAlert('Please select a main category', 'error');
+            return;
+        }
+
+        if (!subCategory) {
+            View.showAlert('Please enter a sub category name', 'error');
+            return;
+        }
+
+        const result = Model.addSubCategory(mainCategory, subCategory);
+        if (result.success) {
+            View.showAlert('Sub category added successfully!', 'success');
+            subCatInput.value = '';
+            this.loadCategoryManagement();
+            View.populateMainCategoryDropdowns();
+            View.populateAllSubCategoriesFilter();
+        } else {
+            View.showAlert(result.error, 'error');
+        }
+    },
+
+    async deleteMainCategory(mainCategory) {
+        const confirmed = await View.showConfirm(
+            `Are you sure you want to delete the main category "${mainCategory}"?`
+        );
+        
+        if (confirmed) {
+            const result = Model.deleteMainCategory(mainCategory);
+            if (result.success) {
+                View.showAlert('Main category deleted successfully!', 'success');
+                this.loadCategoryManagement();
+                View.populateMainCategoryDropdowns();
+            } else {
+                View.showAlert(result.error, 'error');
+            }
+        }
+    },
+
+    async deleteSubCategory(mainCategory, subCategory) {
+        const confirmed = await View.showConfirm(
+            `Are you sure you want to delete "${subCategory}" from "${mainCategory}"?`
+        );
+        
+        if (confirmed) {
+            const result = Model.deleteSubCategory(mainCategory, subCategory);
+            if (result.success) {
+                View.showAlert('Sub category deleted successfully!', 'success');
+                this.loadCategoryManagement();
+                View.populateAllSubCategoriesFilter();
+            } else {
+                View.showAlert(result.error, 'error');
+            }
+        }
+    },
+
+    async renameMainCategory(oldName) {
+        const newName = prompt(`Enter new name for "${oldName}":`, oldName);
+        
+        if (newName && newName.trim() !== oldName) {
+            const result = Model.renameMainCategory(oldName, newName.trim());
+            if (result.success) {
+                View.showAlert('Main category renamed successfully!', 'success');
+                this.loadCategoryManagement();
+                this.loadProducts();
+                View.populateMainCategoryDropdowns();
+            } else {
+                View.showAlert(result.error, 'error');
+            }
+        }
+    },
+
+    async renameSubCategory(mainCategory, oldName) {
+        const newName = prompt(`Enter new name for "${oldName}":`, oldName);
+        
+        if (newName && newName.trim() !== oldName) {
+            const result = Model.renameSubCategory(mainCategory, oldName, newName.trim());
+            if (result.success) {
+                View.showAlert('Sub category renamed successfully!', 'success');
+                this.loadCategoryManagement();
+                this.loadProducts();
+                View.populateAllSubCategoriesFilter();
+            } else {
+                View.showAlert(result.error, 'error');
+            }
+        }
+    },
+
     // Update restaurant name in the header
     updateRestaurantNameInHeader() {
         const settings = Model.getSettings();
@@ -787,6 +1012,7 @@ const Controller = {
                     case 'settings':
                         this.updateSettingsUI();
                         this.setupSettingsPageListeners();
+                        this.loadCategoryManagement();
                         this.updateRestaurantNameInHeader();
                         break;
                 }

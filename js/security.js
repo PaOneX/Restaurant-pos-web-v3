@@ -112,7 +112,12 @@ const Security = {
             errors.push('Product name too long (max 100 characters)');
         }
         
-        if (!data.category || data.category.trim().length === 0) {
+        // Support both old category and new hierarchy system
+        const hasOldCategory = data.category && data.category.trim().length > 0;
+        const hasNewCategories = (data.mainCategory && data.mainCategory.trim().length > 0) && 
+                                  (data.subCategory && data.subCategory.trim().length > 0);
+        
+        if (!hasOldCategory && !hasNewCategories) {
             errors.push('Category is required');
         }
         
@@ -126,15 +131,24 @@ const Security = {
             errors.push('Invalid stock quantity');
         }
         
+        const sanitized = {
+            name: this.sanitizeInput(data.name, 100),
+            price: price,
+            stock: stock
+        };
+        
+        // Add appropriate category fields
+        if (hasNewCategories) {
+            sanitized.mainCategory = this.sanitizeInput(data.mainCategory, 50);
+            sanitized.subCategory = this.sanitizeInput(data.subCategory, 50);
+        } else if (hasOldCategory) {
+            sanitized.category = this.sanitizeInput(data.category, 50);
+        }
+        
         return {
             valid: errors.length === 0,
             errors: errors,
-            sanitizedData: {
-                name: this.sanitizeInput(data.name, 100),
-                category: this.sanitizeInput(data.category, 50),
-                price: price,
-                stock: stock
-            }
+            sanitizedData: sanitized
         };
     },
     
