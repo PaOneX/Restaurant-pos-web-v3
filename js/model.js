@@ -2,13 +2,16 @@
 // MODEL LAYER - Data Management
 // ========================================
 
+// ⚠️ DEVELOPER ONLY - Change restaurant name here
+// This constant controls the restaurant name throughout the entire application
+const RESTAURANT_NAME = "My Restaurant";
+
 const Model = {
   // Default data
   products: [],
   cart: [],
   orders: [],
   settings: {
-    restaurantName: "My Restaurant",
     serviceChargeRate: 0,
     discount: 0,
     currency: "Rs.",
@@ -1014,6 +1017,11 @@ const Model = {
 
   getSettings() {
     return this.settings;
+  },
+
+  // Get restaurant name (from global constant)
+  getRestaurantName() {
+    return RESTAURANT_NAME;
   },
 
   // ========================================

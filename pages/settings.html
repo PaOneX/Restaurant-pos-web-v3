@@ -42,8 +42,9 @@
     <h3>Restaurant Settings</h3>
     <form id="settingsForm">
         <div class="form-group">
-            <label for="restaurantName">Restaurant Name</label>
-            <input type="text" id="restaurantName" value="My Restaurant">
+            <label for="restaurantName">Restaurant Name <span style="color: #666; font-size: 0.85em;">(Developer Only)</span></label>
+            <input type="text" id="restaurantName" value="My Restaurant" disabled title="To change: Edit RESTAURANT_NAME in js/model.js">
+            <small style="color: #ff8c8c; font-size: 0.85em; margin-top: 0.3rem; display: block;"> Developer Only: Change RESTAURANT_NAME Contact Me</small>
         </div>
         <div class="form-row">
             <div class="form-group">

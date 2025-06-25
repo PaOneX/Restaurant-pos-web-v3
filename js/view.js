@@ -424,14 +424,21 @@ const View = {
         const discountInput = document.getElementById('discountRate');
         const phoneInput = document.getElementById('adminPhone');
 
-        if (nameInput) nameInput.value = settings.restaurantName;
+        // Display restaurant name (read-only from global constant)
+        if (nameInput) {
+            nameInput.value = Model.getRestaurantName();
+            nameInput.disabled = true;
+            nameInput.title = "Developer Only: Change RESTAURANT_NAME in model.js";
+        }
         if (serviceChargeInput) serviceChargeInput.value = settings.serviceChargeRate;
         if (discountInput) discountInput.value = settings.discount;
         if (phoneInput) phoneInput.value = settings.adminPhone || '';
 
         // Update header
         const header = document.querySelector('.header h1');
-        if (header) header.textContent = settings.restaurantName;
+        if (header) {
+            header.innerHTML = `<i class="fas fa-utensils"></i> ${Model.getRestaurantName()}`;
+        }
     },
 
     // Render Category Management

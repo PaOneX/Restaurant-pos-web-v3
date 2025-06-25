@@ -608,7 +608,7 @@ const Controller = {
             });
         });
         
-        const message = `*${settings.restaurantName}*\n` +
+        const message = `*${Model.getRestaurantName()}*\n` +
                        `\u{1F4CA} *ORDER HISTORY REPORT*\n` +
                        `━━━━━━━━━━━━━━━━━━\n` +
                        `\u{1F4C5} Date: ${today}\n` +
@@ -703,7 +703,7 @@ const Controller = {
                 .slice(0, 5)
                 .map((([name, data], i) => `${i + 1}. ${name} (${data.count}x)`));
             
-            const message = `*${settings.restaurantName}*\n` +
+            const message = `*${Model.getRestaurantName()}*\n` +
                            `\u{1F4CA} *3-MONTH SALES HISTORY*\n` +
                            `━━━━━━━━━━━━━━━━━━\n\n` +
                            `\u{1F4CA} *OVERALL SUMMARY*\n` +
@@ -743,7 +743,6 @@ const Controller = {
 
     updateSettings() {
         const settingsData = {
-            name: document.getElementById('restaurantName').value,
             serviceCharge: document.getElementById('serviceChargeRate').value,
             discount: document.getElementById('discountRate').value,
             phone: document.getElementById('adminPhone').value
@@ -757,9 +756,6 @@ const Controller = {
         }
 
         const sanitized = validation.sanitizedData;
-
-        //  Update restaurant info
-        Model.updateRestaurantInfo(sanitized.name);
         
         //  Set service charge rate
         Model.setServiceChargeRate(sanitized.serviceCharge);
@@ -909,10 +905,10 @@ const Controller = {
 
     // Update restaurant name in the header
     updateRestaurantNameInHeader() {
-        const settings = Model.getSettings();
+        const restaurantName = Model.getRestaurantName();
         const headerTitle = document.querySelector('.header h1');
         if (headerTitle) {
-            headerTitle.innerHTML = `<i class="fas fa-utensils"></i> ${settings.restaurantName}`;
+            headerTitle.innerHTML = `<i class="fas fa-utensils"></i> ${restaurantName}`;
         }
     },
 
@@ -958,7 +954,7 @@ const Controller = {
             });
         });
         
-        const message = `*${settings.restaurantName}*\n` +
+        const message = `*${Model.getRestaurantName()}*\n` +
                        ` *Daily Report - ${dateStr}*\n` +
                        `━━━━━━━━━━━━━━━━━━\n\n` +
                        ` *SUMMARY*\n` +
