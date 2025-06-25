@@ -542,12 +542,16 @@ const Model = {
       total += item.price * item.quantity;
     });
 
+    // Ensure settings are loaded and have valid numeric values
+    const serviceChargeRate = parseFloat(this.settings.serviceChargeRate) || 0;
+    const discountRate = parseFloat(this.settings.discount) || 0;
+
     // Apply service charge
-    const serviceChargeAmount = total * (this.settings.serviceChargeRate / 100);
+    const serviceChargeAmount = total * (serviceChargeRate / 100);
     total += serviceChargeAmount;
 
     // Apply discount
-    const discountAmount = total * (this.settings.discount / 100);
+    const discountAmount = total * (discountRate / 100);
     total -= discountAmount;
 
     return {
