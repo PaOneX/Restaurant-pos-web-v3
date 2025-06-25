@@ -238,8 +238,7 @@ const Controller = {
 
     //  &  Search Products
     searchProducts(query) {
-        const products = Model.searchProducts(query);
-        View.renderProductsTable(products);
+        this.filterProducts();
     },
 
     //  Filter by Category

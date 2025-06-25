@@ -291,7 +291,8 @@ const Model = {
     const product = {
       id: this.generateUniqueId(),
       name: productData.name,
-      category: productData.category,
+      mainCategory: productData.mainCategory || productData.category,
+      subCategory: productData.subCategory || "",
       price: parseFloat(productData.price),
       stock: parseInt(productData.stock),
     };
@@ -312,7 +313,8 @@ const Model = {
       this.products[index] = {
         id: productId,
         name: productData.name,
-        category: productData.category,
+        mainCategory: productData.mainCategory || productData.category,
+        subCategory: productData.subCategory || "",
         price: parseFloat(productData.price),
         stock: parseInt(productData.stock),
       };
