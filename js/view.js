@@ -20,13 +20,13 @@ const View = {
 
         tbody.innerHTML = products.map(product => `
             <tr>
-                <td>${Security.escapeHTML(product.id)}</td>
-                <td>${Security.escapeHTML(product.name)}</td>
-                <td>${Security.escapeHTML(product.mainCategory || product.category || 'N/A')}</td>
-                <td>${Security.escapeHTML(product.subCategory || 'N/A')}</td>
-                <td>${Model.formatCurrency(product.price)}</td>
-                <td>${product.stock}</td>
-                <td>
+                <td data-label="Product ID">${Security.escapeHTML(product.id)}</td>
+                <td data-label="Product Name">${Security.escapeHTML(product.name)}</td>
+                <td data-label="Main Category">${Security.escapeHTML(product.mainCategory || product.category || 'N/A')}</td>
+                <td data-label="Sub Category">${Security.escapeHTML(product.subCategory || 'N/A')}</td>
+                <td data-label="Price">${Model.formatCurrency(product.price)}</td>
+                <td data-label="Stock">${product.stock}</td>
+                <td data-label="Actions">
                     <button class="btn btn-sm btn-edit" onclick="Controller.editProduct('${Security.escapeHTML(product.id)}')">
                         <i class="fas fa-edit"></i> Edit
                     </button>
@@ -396,12 +396,12 @@ const View = {
 
         tbody.innerHTML = sortedOrders.map(order => `
             <tr>
-                <td>${order.id}</td>
-                <td>${order.date.full}</td>
-                <td>${order.items.length}</td>
-                <td>${Model.formatCurrency(order.totals.total)}</td>
-                <td>${order.user}</td>
-                <td>
+                <td data-label="Order ID">${order.id}</td>
+                <td data-label="Date & Time">${order.date.full}</td>
+                <td data-label="Items">${order.items.length}</td>
+                <td data-label="Total">${Model.formatCurrency(order.totals.total)}</td>
+                <td data-label="Cashier">${order.user}</td>
+                <td data-label="Actions">
                     <button class="btn btn-sm btn-view" onclick="Controller.viewOrder('${order.id}')">
                         <i class="fas fa-eye"></i> View
                     </button>
@@ -754,43 +754,65 @@ const View = {
             </div>
         `).join('');
 
-        // Top Products Section
-        const topProducts = Object.entries(summary.productTotals)
-            .sort((a, b) => b[1].count - a[1].count)
-            .slice(0, 10);
+        // All Products Section - Show ALL products sold in 3 months
+        const allProducts = Object.entries(summary.productTotals)
+            .sort((a, b) => b[1].count - a[1].count);
 
-        const topProductsTable = `
+        const allProductsTable = `
             <div class="top-products-card">
-                <h2><i class="fas fa-trophy"></i> Top 10 Products</h2>
-                <table class="top-products-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Product</th>
-                            <th>Category</th>
-                            <th>Qty Sold</th>
-                            <th>Revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${topProducts.map(([name, data], index) => `
+                <h2><i class="fas fa-list-alt"></i> All Products Sold in 3 Months (${allProducts.length} Products)</h2>
+                <div class="table-responsive">
+                    <table class="top-products-table">
+                        <thead>
                             <tr>
-                                <td>${index + 1}</td>
-                                <td>${name}</td>
-                                <td>${data.category || 'N/A'}</td>
-                                <td>${data.count}</td>
-                                <td>${Model.formatCurrency(data.amount)}</td>
+                                <th>#</th>
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Total Qty Sold</th>
+                                <th>Unit Price Range</th>
+                                <th>Total Revenue</th>
+                                <th>% of Total</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            ${allProducts.map(([name, data], index) => {
+                                const percentOfTotal = summary.totalRevenue > 0 
+                                    ? ((data.amount / summary.totalRevenue) * 100).toFixed(1) 
+                                    : 0;
+                                const avgPrice = data.count > 0 
+                                    ? Model.formatCurrency(data.amount / data.count) 
+                                    : 'N/A';
+                                return `
+                                    <tr>
+                                        <td data-label="#">${index + 1}</td>
+                                        <td data-label="Product Name"><strong>${name}</strong></td>
+                                        <td data-label="Category"><span class="category-badge">${data.category || 'N/A'}</span></td>
+                                        <td data-label="Total Qty Sold"><strong>${data.count}</strong></td>
+                                        <td data-label="Unit Price Range">${avgPrice}</td>
+                                        <td data-label="Total Revenue"><strong>${Model.formatCurrency(data.amount)}</strong></td>
+                                        <td data-label="% of Total">${percentOfTotal}%</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: var(--light-color); font-weight: bold;">
+                                <td colspan="3">TOTAL</td>
+                                <td><strong>${summary.totalItems}</strong></td>
+                                <td>-</td>
+                                <td><strong>${Model.formatCurrency(summary.totalRevenue)}</strong></td>
+                                <td>100%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         `;
 
         historyContainer.innerHTML = summaryCard + 
             '<h2 class="section-title"><i class="fas fa-calendar"></i> Monthly Breakdown</h2>' +
             '<div class="months-grid">' + monthlyCards + '</div>' + 
-            topProductsTable;
+            allProductsTable;
     },
 
     // Show month details in modal
@@ -826,10 +848,10 @@ const View = {
                 .sort((a, b) => b.date.localeCompare(a.date))
                 .map(day => `
                     <tr>
-                        <td>${day.dateFormatted}</td>
-                        <td>${day.orders}</td>
-                        <td>${day.items}</td>
-                        <td>${Model.formatCurrency(day.revenue)}</td>
+                        <td data-label="Date">${day.dateFormatted}</td>
+                        <td data-label="Orders">${day.orders}</td>
+                        <td data-label="Items">${day.items}</td>
+                        <td data-label="Revenue">${Model.formatCurrency(day.revenue)}</td>
                     </tr>
                 `).join('');
 
