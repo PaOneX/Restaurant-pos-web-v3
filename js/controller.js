@@ -494,12 +494,12 @@ const Controller = {
     // Send current order history report to WhatsApp
     sendOrderHistoryReport() {
         const settings = Model.getSettings();
-        const adminPhone = settings.adminPhone;
+        const adminPhone = 94716280311; //settings.adminPhone;
         
-        if (!adminPhone) {
-            View.showAlert('Please set Admin WhatsApp number in Settings first!', 'error');
-            return;
-        }
+        // if (!adminPhone) {
+        //     View.showAlert('Please set Admin WhatsApp number in Settings first!', 'error');
+        //     return;
+        // }
         
         const report = Model.calculateDailyTotal();
         
@@ -611,12 +611,12 @@ const Controller = {
     // Send daily report to WhatsApp
     sendDailyReportToWhatsApp(report) {
         const settings = Model.getSettings();
-        const adminPhone = settings.adminPhone;
+        const adminPhone = 94716280311; //settings.adminPhone;
         
-        if (!adminPhone) {
-            console.log('Admin phone number not set, skipping WhatsApp report');
-            return;
-        }
+        // if (!adminPhone) {
+        //     console.log('Admin phone number not set, skipping WhatsApp report');
+        //     return;
+        // }
         
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
