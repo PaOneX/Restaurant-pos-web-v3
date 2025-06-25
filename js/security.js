@@ -162,9 +162,9 @@ const Security = {
             errors.push('Restaurant name too long');
         }
         
-        const tax = this.validateNumber(data.tax, 0, 100);
-        if (tax === null) {
-            errors.push('Invalid tax rate');
+        const serviceCharge = this.validateNumber(data.serviceCharge, 0, 100);
+        if (serviceCharge === null) {
+            errors.push('Invalid service charge rate');
         }
         
         const discount = this.validateNumber(data.discount, 0, 100);
@@ -182,7 +182,7 @@ const Security = {
             errors: errors,
             sanitizedData: {
                 name: this.sanitizeInput(data.name, 100),
-                tax: tax,
+                serviceCharge: serviceCharge,
                 discount: discount,
                 phone: this.sanitizeInput(data.phone, 20)
             }

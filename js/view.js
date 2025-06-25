@@ -205,7 +205,7 @@ const View = {
         if (cart.length === 0) {
             cartItems.innerHTML = '';
             if (emptyCart) emptyCart.style.display = 'block';
-            this.updateTotalDisplay({ subtotal: 0, tax: 0, discount: 0, total: 0 });
+            this.updateTotalDisplay({ subtotal: 0, serviceCharge: 0, discount: 0, total: 0 });
             return;
         }
 
@@ -250,12 +250,12 @@ const View = {
     // Update total display
     updateTotalDisplay(totals) {
         const subtotalEl = document.getElementById('subtotalAmount');
-        const taxEl = document.getElementById('taxAmount');
+        const serviceChargeEl = document.getElementById('serviceChargeAmount');
         const discountEl = document.getElementById('discountAmount');
         const totalEl = document.getElementById('totalAmount');
 
         if (subtotalEl) subtotalEl.textContent = Model.formatCurrency(totals.subtotal);
-        if (taxEl) taxEl.textContent = Model.formatCurrency(totals.tax);
+        if (serviceChargeEl) serviceChargeEl.textContent = Model.formatCurrency(totals.serviceCharge);
         if (discountEl) discountEl.textContent = Model.formatCurrency(totals.discount);
         if (totalEl) totalEl.textContent = Model.formatCurrency(totals.total);
     },
@@ -342,8 +342,8 @@ const View = {
                         <span>${Model.formatCurrency(order.totals.subtotal)}</span>
                     </div>
                     <div class="total-row">
-                        <span>Tax (${settings.taxRate}%):</span>
-                        <span>${Model.formatCurrency(order.totals.tax)}</span>
+                        <span>Service Charge (${settings.serviceChargeRate}%):</span>
+                        <span>${Model.formatCurrency(order.totals.serviceCharge)}</span>
                     </div>
                     <div class="total-row">
                         <span>Discount (${settings.discount}%):</span>
@@ -420,12 +420,12 @@ const View = {
     // Update settings display
     updateSettingsDisplay(settings) {
         const nameInput = document.getElementById('restaurantName');
-        const taxInput = document.getElementById('taxRate');
+        const serviceChargeInput = document.getElementById('serviceChargeRate');
         const discountInput = document.getElementById('discountRate');
         const phoneInput = document.getElementById('adminPhone');
 
         if (nameInput) nameInput.value = settings.restaurantName;
-        if (taxInput) taxInput.value = settings.taxRate;
+        if (serviceChargeInput) serviceChargeInput.value = settings.serviceChargeRate;
         if (discountInput) discountInput.value = settings.discount;
         if (phoneInput) phoneInput.value = settings.adminPhone || '';
 

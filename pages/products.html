@@ -86,7 +86,7 @@
     <div class="table-header">
         <h3>Products List</h3>
         <div class="table-filters">
-            <input type="text" id="searchProduct" placeholder="Search...">
+            <input type="text" id="searchProduct" placeholder="Search..." oninput="Controller.filterProducts()">
             <select id="mainCategoryFilter" onchange="Controller.filterByMainCategory()">
                 <option value="All">All Main Categories</option>
             </select>

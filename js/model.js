@@ -9,7 +9,7 @@ const Model = {
   orders: [],
   settings: {
     restaurantName: "My Restaurant",
-    taxRate: 0,
+    serviceChargeRate: 0,
     discount: 0,
     currency: "Rs.",
     adminPhone: "94716280311",
@@ -22,9 +22,9 @@ const Model = {
   // Category hierarchy
   categoryHierarchy: {
     "Sri Lankan": ["Fried Rice", "Kottu", "Set Menu"],
-    "International": ["Pasta", "Noodles", "Pizza"],
-    "Beverages": ["Hot Drinks", "Cold Drinks", "Juices"],
-    "Meat": ["Chicken", "Beef", "Seafood"]
+    International: ["Pasta", "Noodles", "Pizza"],
+    Beverages: ["Hot Drinks", "Cold Drinks", "Juices"],
+    Meat: ["Chicken", "Beef", "Seafood"],
   },
 
   // ========================================
@@ -75,210 +75,67 @@ const Model = {
   // Get default products (for first time)
   getDefaultProducts() {
     return [
-      {
-        id: "1",
-        name: "Vegetable Fried Rice",
-        category: "Fried Rice",
-        price: 650,
-        stock: 50,
-      },
-      {
-        id: "2",
-        name: "Egg Fried Rice",
-        category: "Fried Rice",
-        price: 700,
-        stock: 50,
-      },
-      {
-        id: "3",
-        name: "Chicken Fried Rice",
-        category: "Fried Rice",
-        price: 850,
-        stock: 40,
-      },
-      {
-        id: "4",
-        name: "Seafood Fried Rice",
-        category: "Fried Rice",
-        price: 950,
-        stock: 35,
-      },
-      {
-        id: "5",
-        name: "Mixed Fried Rice",
-        category: "Fried Rice",
-        price: 1000,
-        stock: 30,
-      },
+       // ================= Sri Lankan - Fried Rice =================
+  { id: "1", name: "Vegetable Fried Rice", mainCategory: "Sri Lankan", subCategory: "Fried Rice", price: 650 },
+  { id: "2", name: "Egg Fried Rice", mainCategory: "Sri Lankan", subCategory: "Fried Rice", price: 750 },
+  { id: "3", name: "Chicken Fried Rice", mainCategory: "Sri Lankan", subCategory: "Fried Rice", price: 950 },
+  { id: "4", name: "Seafood Fried Rice", mainCategory: "Sri Lankan", subCategory: "Fried Rice", price: 1100 },
 
-      // ðŸ¥˜ Kottu
-      {
-        id: "6",
-        name: "Vegetable Kottu",
-        category: "Kottu",
-        price: 650,
-        stock: 40,
-      },
-      { id: "7", name: "Egg Kottu", category: "Kottu", price: 700, stock: 40 },
-      {
-        id: "8",
-        name: "Chicken Kottu",
-        category: "Kottu",
-        price: 850,
-        stock: 35,
-      },
-      { id: "9", name: "Beef Kottu", category: "Kottu", price: 950, stock: 30 },
-      {
-        id: "10",
-        name: "Seafood Kottu",
-        category: "Kottu",
-        price: 1000,
-        stock: 25,
-      },
-      {
-        id: "11",
-        name: "Cheese Kottu",
-        category: "Kottu",
-        price: 900,
-        stock: 30,
-      },
+  // ================= Sri Lankan - Kottu =================
+  { id: "5", name: "Vegetable Kottu", mainCategory: "Sri Lankan", subCategory: "Kottu", price: 650 },
+  { id: "6", name: "Egg Kottu", mainCategory: "Sri Lankan", subCategory: "Kottu", price: 750 },
+  { id: "7", name: "Chicken Kottu", mainCategory: "Sri Lankan", subCategory: "Kottu", price: 950 },
+  { id: "8", name: "Beef Kottu", mainCategory: "Sri Lankan", subCategory: "Kottu", price: 1050 },
+  { id: "9", name: "Cheese Kottu", mainCategory: "Sri Lankan", subCategory: "Kottu", price: 1000 },
 
-      // ðŸ Pasta
-      {
-        id: "12",
-        name: "Vegetable Pasta",
-        category: "Pasta",
-        price: 800,
-        stock: 30,
-      },
-      {
-        id: "13",
-        name: "Chicken Pasta",
-        category: "Pasta",
-        price: 950,
-        stock: 25,
-      },
-      {
-        id: "14",
-        name: "Seafood Pasta",
-        category: "Pasta",
-        price: 1100,
-        stock: 20,
-      },
-      {
-        id: "15",
-        name: "Cheese Pasta",
-        category: "Pasta",
-        price: 900,
-        stock: 25,
-      },
+  // ================= Sri Lankan - Set Menu =================
+  { id: "10", name: "Rice & Curry (Veg)", mainCategory: "Sri Lankan", subCategory: "Set Menu", price: 600 },
+  { id: "11", name: "Rice & Curry (Chicken)", mainCategory: "Sri Lankan", subCategory: "Set Menu", price: 850 },
+  { id: "12", name: "Rice & Curry (Fish)", mainCategory: "Sri Lankan", subCategory: "Set Menu", price: 900 },
 
-      // ðŸœ Noodles
-      {
-        id: "16",
-        name: "Vegetable Noodles",
-        category: "Noodles",
-        price: 650,
-        stock: 40,
-      },
-      {
-        id: "17",
-        name: "Egg Noodles",
-        category: "Noodles",
-        price: 700,
-        stock: 40,
-      },
-      {
-        id: "18",
-        name: "Chicken Noodles",
-        mainCategory: "International",
-        subCategory: "Noodles",
-        price: 850,
-        stock: 35,
-      },
-      {
-        id: "19",
-        name: "Seafood Noodles",
-        mainCategory: "International",
-        subCategory: "Noodles",
-        price: 950,
-        stock: 30,
-      },
-      {
-        id: "20",
-        name: "Mixed Noodles",
-        mainCategory: "International",
-        subCategory: "Noodles",
-        price: 1000,
-        stock: 25,
-      },
+  // ================= International - Pasta =================
+  { id: "13", name: "Vegetable Pasta", mainCategory: "International", subCategory: "Pasta", price: 900 },
+  { id: "14", name: "Chicken Pasta", mainCategory: "International", subCategory: "Pasta", price: 1100 },
+  { id: "15", name: "Creamy Cheese Pasta", mainCategory: "International", subCategory: "Pasta", price: 1200 },
 
-      // Beverages - Cold Drinks
-      {
-        id: "21",
-        name: "Coca Cola",
-        mainCategory: "Beverages",
-        subCategory: "Cold Drinks",
-        price: 150,
-        stock: 100,
-      },
-      {
-        id: "22",
-        name: "Sprite",
-        mainCategory: "Beverages",
-        subCategory: "Cold Drinks",
-        price: 150,
-        stock: 100,
-      },
-      {
-        id: "23",
-        name: "Fanta",
-        mainCategory: "Beverages",
-        subCategory: "Cold Drinks",
-        price: 150,
-        stock: 100,
-      },
-      {
-        id: "24",
-        name: "Water Bottle",
-        mainCategory: "Beverages",
-        subCategory: "Cold Drinks",
-        price: 100,
-        stock: 150,
-      },
-      {
-        id: "25",
-        name: "Fresh Lime Juice",
-        mainCategory: "Beverages",
-        subCategory: "Juices",
-        price: 200,
-        stock: 60,
-      },
-      {
-        id: "26",
-        name: "Iced Coffee",
-        mainCategory: "Beverages",
-        subCategory: "Hot Drinks",
-        price: 300,
-        stock: 50,
-      },
-      {
-        id: "27",
-        name: "Milk Shake",
-        mainCategory: "Beverages",
-        subCategory: "Cold Drinks",
-        price: 400,
-        stock: 40,
-      },
-      {
-        id: "28",
-        name: "Orange Juice",
-        mainCategory: "Beverages",
-        subCategory: "Juices",
-        price: 250,
-        stock: 60,
-      },
-    ];
+  // ================= International - Noodles =================
+  { id: "16", name: "Vegetable Noodles", mainCategory: "International", subCategory: "Noodles", price: 650 },
+  { id: "17", name: "Chicken Noodles", mainCategory: "International", subCategory: "Noodles", price: 850 },
+  { id: "18", name: "Seafood Noodles", mainCategory: "International", subCategory: "Noodles", price: 1000 },
+
+  // ================= International - Pizza =================
+  { id: "19", name: "Vegetable Pizza", mainCategory: "International", subCategory: "Pizza", price: 1200 },
+  { id: "20", name: "Chicken Pizza", mainCategory: "International", subCategory: "Pizza", price: 1400 },
+  { id: "21", name: "Cheese Pizza", mainCategory: "International", subCategory: "Pizza", price: 1300 },
+
+  // ================= Meat - Chicken =================
+  { id: "22", name: "Fried Chicken", mainCategory: "Meat", subCategory: "Chicken", price: 900 },
+  { id: "23", name: "Chicken Curry", mainCategory: "Meat", subCategory: "Chicken", price: 850 },
+
+  // ================= Meat - Beef =================
+  { id: "24", name: "Beef Curry", mainCategory: "Meat", subCategory: "Beef", price: 950 },
+  { id: "25", name: "Beef Fry", mainCategory: "Meat", subCategory: "Beef", price: 1000 },
+
+  // ================= Meat - Seafood =================
+  { id: "26", name: "Fish Curry", mainCategory: "Meat", subCategory: "Seafood", price: 850 },
+  { id: "27", name: "Prawn Fry", mainCategory: "Meat", subCategory: "Seafood", price: 1200 },
+
+  // ================= Beverages - Hot Drinks (WITH STOCK) =================
+  { id: "28", name: "Milk Tea", mainCategory: "Beverages", subCategory: "Hot Drinks", price: 150, stock: 50 },
+  { id: "29", name: "Black Coffee", mainCategory: "Beverages", subCategory: "Hot Drinks", price: 200, stock: 40 },
+  { id: "30", name: "Hot Chocolate", mainCategory: "Beverages", subCategory: "Hot Drinks", price: 250, stock: 30 },
+
+  // ================= Beverages - Cold Drinks (WITH STOCK) =================
+  { id: "31", name: "Coca Cola", mainCategory: "Beverages", subCategory: "Cold Drinks", price: 180, stock: 60 },
+  { id: "32", name: "Sprite", mainCategory: "Beverages", subCategory: "Cold Drinks", price: 180, stock: 60 },
+  { id: "33", name: "Iced Coffee", mainCategory: "Beverages", subCategory: "Cold Drinks", price: 300, stock: 35 },
+
+  // ================= Beverages - Juices (WITH STOCK) =================
+  { id: "34", name: "Orange Juice", mainCategory: "Beverages", subCategory: "Juices", price: 250, stock: 25 },
+  { id: "35", name: "Mango Juice", mainCategory: "Beverages", subCategory: "Juices", price: 250, stock: 25 },
+  { id: "36", name: "Avocado Juice", mainCategory: "Beverages", subCategory: "Juices", price: 300, stock: 20 }
+
+];
   },
 
   // Get all products
@@ -352,20 +209,28 @@ const Model = {
   filterByCategory(category) {
     if (!category || category === "All") return this.products;
     // Check if it's a main category or subcategory
-    return this.products.filter((p) => 
-      p.mainCategory === category || 
-      p.subCategory === category ||
-      p.category === category
+    return this.products.filter(
+      (p) =>
+        p.mainCategory === category ||
+        p.subCategory === category ||
+        p.category === category,
     );
   },
 
   // Filter by main category and subcategory
   filterByHierarchy(mainCategory, subCategory) {
-    if (!mainCategory || mainCategory === "All") return this.products;
-    let filtered = this.products.filter((p) => p.mainCategory === mainCategory);
+    let filtered = this.products;
+    
+    // Filter by main category if not "All"
+    if (mainCategory && mainCategory !== "All") {
+      filtered = filtered.filter((p) => p.mainCategory === mainCategory);
+    }
+    
+    // Filter by subcategory if not "All"
     if (subCategory && subCategory !== "All") {
       filtered = filtered.filter((p) => p.subCategory === subCategory);
     }
+    
     return filtered;
   },
 
@@ -433,12 +298,12 @@ const Model = {
     if (!mainCategory || mainCategory.trim().length === 0) {
       return { success: false, error: "Main category name is required" };
     }
-    
+
     const trimmed = mainCategory.trim();
     if (this.categoryHierarchy[trimmed]) {
       return { success: false, error: "Main category already exists" };
     }
-    
+
     this.categoryHierarchy[trimmed] = [];
     this.saveCategoryHierarchy();
     return { success: true };
@@ -447,18 +312,21 @@ const Model = {
   // Add subcategory to main category
   addSubCategory(mainCategory, subCategory) {
     if (!mainCategory || !subCategory) {
-      return { success: false, error: "Both main and sub category are required" };
+      return {
+        success: false,
+        error: "Both main and sub category are required",
+      };
     }
-    
+
     if (!this.categoryHierarchy[mainCategory]) {
       return { success: false, error: "Main category does not exist" };
     }
-    
+
     const trimmedSub = subCategory.trim();
     if (this.categoryHierarchy[mainCategory].includes(trimmedSub)) {
       return { success: false, error: "Sub category already exists" };
     }
-    
+
     this.categoryHierarchy[mainCategory].push(trimmedSub);
     this.saveCategoryHierarchy();
     return { success: true };
@@ -469,13 +337,18 @@ const Model = {
     if (!this.categoryHierarchy[mainCategory]) {
       return { success: false, error: "Main category does not exist" };
     }
-    
+
     // Check if any products use this category
-    const productsUsingCategory = this.products.filter(p => p.mainCategory === mainCategory);
+    const productsUsingCategory = this.products.filter(
+      (p) => p.mainCategory === mainCategory,
+    );
     if (productsUsingCategory.length > 0) {
-      return { success: false, error: `Cannot delete. ${productsUsingCategory.length} products use this category` };
+      return {
+        success: false,
+        error: `Cannot delete. ${productsUsingCategory.length} products use this category`,
+      };
     }
-    
+
     delete this.categoryHierarchy[mainCategory];
     this.saveCategoryHierarchy();
     return { success: true };
@@ -486,20 +359,23 @@ const Model = {
     if (!this.categoryHierarchy[mainCategory]) {
       return { success: false, error: "Main category does not exist" };
     }
-    
+
     const index = this.categoryHierarchy[mainCategory].indexOf(subCategory);
     if (index === -1) {
       return { success: false, error: "Sub category does not exist" };
     }
-    
+
     // Check if any products use this subcategory
     const productsUsingSubCat = this.products.filter(
-      p => p.mainCategory === mainCategory && p.subCategory === subCategory
+      (p) => p.mainCategory === mainCategory && p.subCategory === subCategory,
     );
     if (productsUsingSubCat.length > 0) {
-      return { success: false, error: `Cannot delete. ${productsUsingSubCat.length} products use this sub category` };
+      return {
+        success: false,
+        error: `Cannot delete. ${productsUsingSubCat.length} products use this sub category`,
+      };
     }
-    
+
     this.categoryHierarchy[mainCategory].splice(index, 1);
     this.saveCategoryHierarchy();
     return { success: true };
@@ -510,27 +386,27 @@ const Model = {
     if (!oldName || !newName) {
       return { success: false, error: "Both old and new names are required" };
     }
-    
+
     if (!this.categoryHierarchy[oldName]) {
       return { success: false, error: "Main category does not exist" };
     }
-    
+
     const trimmedNew = newName.trim();
     if (this.categoryHierarchy[trimmedNew] && trimmedNew !== oldName) {
       return { success: false, error: "New category name already exists" };
     }
-    
+
     // Update category hierarchy
     this.categoryHierarchy[trimmedNew] = this.categoryHierarchy[oldName];
     delete this.categoryHierarchy[oldName];
-    
+
     // Update all products using this category
-    this.products.forEach(p => {
+    this.products.forEach((p) => {
       if (p.mainCategory === oldName) {
         p.mainCategory = trimmedNew;
       }
     });
-    
+
     this.saveCategoryHierarchy();
     this.saveToLocalStorage("products", this.products);
     return { success: true };
@@ -541,31 +417,34 @@ const Model = {
     if (!mainCategory || !oldName || !newName) {
       return { success: false, error: "All fields are required" };
     }
-    
+
     if (!this.categoryHierarchy[mainCategory]) {
       return { success: false, error: "Main category does not exist" };
     }
-    
+
     const index = this.categoryHierarchy[mainCategory].indexOf(oldName);
     if (index === -1) {
       return { success: false, error: "Sub category does not exist" };
     }
-    
+
     const trimmedNew = newName.trim();
-    if (this.categoryHierarchy[mainCategory].includes(trimmedNew) && trimmedNew !== oldName) {
+    if (
+      this.categoryHierarchy[mainCategory].includes(trimmedNew) &&
+      trimmedNew !== oldName
+    ) {
       return { success: false, error: "New sub category name already exists" };
     }
-    
+
     // Update subcategory in hierarchy
     this.categoryHierarchy[mainCategory][index] = trimmedNew;
-    
+
     // Update all products using this subcategory
-    this.products.forEach(p => {
+    this.products.forEach((p) => {
       if (p.mainCategory === mainCategory && p.subCategory === oldName) {
         p.subCategory = trimmedNew;
       }
     });
-    
+
     this.saveCategoryHierarchy();
     this.saveToLocalStorage("products", this.products);
     return { success: true };
@@ -659,9 +538,9 @@ const Model = {
       total += item.price * item.quantity;
     });
 
-    // Apply tax
-    const taxAmount = total * (this.settings.taxRate / 100);
-    total += taxAmount;
+    // Apply service charge
+    const serviceChargeAmount = total * (this.settings.serviceChargeRate / 100);
+    total += serviceChargeAmount;
 
     // Apply discount
     const discountAmount = total * (this.settings.discount / 100);
@@ -672,7 +551,7 @@ const Model = {
         (sum, item) => sum + item.price * item.quantity,
         0,
       ),
-      tax: taxAmount,
+      serviceCharge: serviceChargeAmount,
       discount: discountAmount,
       total: total,
     };
@@ -698,30 +577,32 @@ const Model = {
 
     // Check if all products have sufficient stock
     for (let cartItem of this.cart) {
-      const product = this.products.find(p => p.id === cartItem.productId);
+      const product = this.products.find((p) => p.id === cartItem.productId);
       if (!product) {
-        console.error('Product not found:', cartItem);
+        console.error("Product not found:", cartItem);
         return { error: `Product ${cartItem.name} not found` };
       }
       if (product.stock < cartItem.quantity) {
-        return { error: `Insufficient stock for ${cartItem.name}. Available: ${product.stock}` };
+        return {
+          error: `Insufficient stock for ${cartItem.name}. Available: ${product.stock}`,
+        };
       }
     }
 
     // Deduct stock from products
-    this.cart.forEach(cartItem => {
-      const product = this.products.find(p => p.id === cartItem.productId);
+    this.cart.forEach((cartItem) => {
+      const product = this.products.find((p) => p.id === cartItem.productId);
       if (product) {
         product.stock -= cartItem.quantity;
       }
     });
-    
+
     // Save updated products to localStorage
-    this.saveToLocalStorage('products', this.products);
+    this.saveToLocalStorage("products", this.products);
 
     const totals = this.calculateTotal();
     const paymentData = this.calculateBalance(this.paymentAmount);
-    
+
     const order = {
       id: this.orderCounter.toString(),
       items: [...this.cart],
@@ -734,12 +615,12 @@ const Model = {
 
     this.orders.push(order);
     this.orderCounter++;
-    
+
     this.saveToLocalStorage("orders", this.orders);
     this.saveToLocalStorage("orderCounter", this.orderCounter);
     this.clearCart();
     this.clearPayment();
-    
+
     return order;
   },
 
@@ -750,7 +631,10 @@ const Model = {
 
   // Calculate daily total
   calculateDailyTotal() {
-    const total = this.orders.reduce((sum, order) => sum + order.totals.total, 0);
+    const total = this.orders.reduce(
+      (sum, order) => sum + order.totals.total,
+      0,
+    );
     const orderCount = this.orders.length;
     return {
       total: total,
@@ -762,35 +646,62 @@ const Model = {
   // Get detailed order statistics with category breakdown
   getDetailedOrderStats() {
     const categoryStats = {};
+    const productStats = {};
     let totalItems = 0;
     let totalAmount = 0;
-    
-    this.orders.forEach(order => {
+
+    this.orders.forEach((order) => {
       totalAmount += order.totals.total;
-      
-      order.items.forEach(item => {
+
+      order.items.forEach((item) => {
         // Get the product to find its category
         const product = this.getProductById(item.productId);
-        const category = product ? product.category : 'Other';
+        const mainCategory = product ? (product.mainCategory || product.category) : "Other";
+        const productName = product ? product.name : "Unknown Product";
+
+        // Category stats
+        if (!categoryStats[mainCategory]) {
+          categoryStats[mainCategory] = {
+            count: 0,
+            amount: 0,
+            products: {}
+          };
+        }
+
+        categoryStats[mainCategory].count += item.quantity;
+        categoryStats[mainCategory].amount += item.price * item.quantity;
         
-        if (!categoryStats[category]) {
-          categoryStats[category] = {
+        // Product stats within category
+        if (!categoryStats[mainCategory].products[productName]) {
+          categoryStats[mainCategory].products[productName] = {
             count: 0,
             amount: 0
           };
         }
+        categoryStats[mainCategory].products[productName].count += item.quantity;
+        categoryStats[mainCategory].products[productName].amount += item.price * item.quantity;
         
-        categoryStats[category].count += item.quantity;
-        categoryStats[category].amount += item.price * item.quantity;
+        // Overall product stats
+        if (!productStats[productName]) {
+          productStats[productName] = {
+            count: 0,
+            amount: 0,
+            category: mainCategory
+          };
+        }
+        productStats[productName].count += item.quantity;
+        productStats[productName].amount += item.price * item.quantity;
+        
         totalItems += item.quantity;
       });
     });
-    
+
     return {
       categoryStats: categoryStats,
+      productStats: productStats,
       totalOrders: this.orders.length,
       totalItems: totalItems,
-      totalAmount: totalAmount
+      totalAmount: totalAmount,
     };
   },
 
@@ -835,18 +746,18 @@ const Model = {
   checkDailyReset() {
     const today = new Date().toDateString();
     const lastReset = this.settings.lastResetDate;
-    
+
     if (lastReset !== today && this.orders.length > 0) {
       // New day detected, generate report
       const report = this.resetDailyOrders();
-      
+
       // Update last reset date
       this.settings.lastResetDate = today;
       this.saveToLocalStorage("settings", this.settings);
-      
+
       return report;
     }
-    
+
     return null;
   },
 
@@ -856,9 +767,9 @@ const Model = {
     this.saveToLocalStorage("settings", this.settings);
   },
 
-  // 3ï¸âƒ£3ï¸âƒ£ Set Tax Rate
-  setTaxRate(rate) {
-    this.settings.taxRate = parseFloat(rate);
+  // 3ï¸âƒ£3ï¸âƒ£ Set Service Charge Rate
+  setServiceChargeRate(rate) {
+    this.settings.serviceChargeRate = parseFloat(rate);
     this.saveToLocalStorage("settings", this.settings);
   },
 
@@ -890,13 +801,12 @@ const Model = {
       { username: "Cashier", password: "cashier123", role: "cashier" },
     ];
 
-
     const user = users.find(
       (u) => u.username === username && u.password === password,
     );
-    
-    console.log('Found user:', user);
-    
+
+    console.log("Found user:", user);
+
     if (user) {
       this.currentUser = { username: user.username, role: user.role };
       this.saveToLocalStorage("currentUser", this.currentUser);
@@ -972,4 +882,3 @@ const Model = {
     this.paymentAmount = 0;
   },
 };
-
