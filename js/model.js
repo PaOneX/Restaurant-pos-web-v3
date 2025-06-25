@@ -579,24 +579,27 @@ const Model = {
   saveOrder() {
     if (this.cart.length === 0) return false;
 
-    // Check if all products have sufficient stock
+    // Check if all products have sufficient stock (only for products with stock tracking)
     for (let cartItem of this.cart) {
       const product = this.products.find((p) => p.id === cartItem.productId);
       if (!product) {
         console.error("Product not found:", cartItem);
         return { error: `Product ${cartItem.name} not found` };
       }
-      if (product.stock < cartItem.quantity) {
-        return {
-          error: `Insufficient stock for ${cartItem.name}. Available: ${product.stock}`,
-        };
+      // Only check stock if product has stock tracking (not null/undefined)
+      if (product.stock !== null && product.stock !== undefined && typeof product.stock === 'number') {
+        if (product.stock < cartItem.quantity) {
+          return {
+            error: `Insufficient stock for ${cartItem.name}. Available: ${product.stock}`,
+          };
+        }
       }
     }
 
-    // Deduct stock from products
+    // Deduct stock from products (only for products with stock tracking)
     this.cart.forEach((cartItem) => {
       const product = this.products.find((p) => p.id === cartItem.productId);
-      if (product) {
+      if (product && product.stock !== null && product.stock !== undefined && typeof product.stock === 'number') {
         product.stock -= cartItem.quantity;
       }
     });
@@ -768,8 +771,10 @@ const Model = {
       // Get detailed stats for the day
       const stats = this.getDetailedOrderStats();
       
-      // Add daily report
-      monthRecord.dailyReports.push({
+      // Check if today's report already exists
+      const existingReportIndex = monthRecord.dailyReports.findIndex(r => r.date === dateKey);
+      
+      const newDailyReport = {
         date: dateKey,
         dateFormatted: today.toLocaleDateString(),
         orders: dailyReport.orderCount,
@@ -778,12 +783,26 @@ const Model = {
         categoryStats: stats.categoryStats,
         productStats: stats.productStats,
         timestamp: Date.now()
-      });
+      };
       
-      // Update month totals
-      monthRecord.totalOrders += dailyReport.orderCount;
-      monthRecord.totalRevenue += dailyReport.total;
-      monthRecord.totalItems += stats.totalItems;
+      if (existingReportIndex !== -1) {
+        // Replace existing report
+        monthRecord.dailyReports[existingReportIndex] = newDailyReport;
+      } else {
+        // Add new daily report
+        monthRecord.dailyReports.push(newDailyReport);
+      }
+      
+      // Recalculate month totals from all daily reports
+      monthRecord.totalOrders = 0;
+      monthRecord.totalRevenue = 0;
+      monthRecord.totalItems = 0;
+      
+      monthRecord.dailyReports.forEach(report => {
+        monthRecord.totalOrders += report.orders || 0;
+        monthRecord.totalRevenue += report.revenue || 0;
+        monthRecord.totalItems += report.items || 0;
+      });
       
       // Clean up old months (keep only last 3 months)
       this.cleanupOldSalesHistory();
@@ -936,6 +955,22 @@ const Model = {
     }
 
     return null;
+  },
+  
+  // Manually save current day's orders to history (without resetting)
+  saveCurrentDayToHistory() {
+    if (this.orders.length === 0) {
+      return { success: false, message: 'No orders to save' };
+    }
+    
+    try {
+      const dailyReport = this.calculateDailyTotal();
+      this.saveDailyReportToHistory(dailyReport);
+      return { success: true, message: 'Current day saved to history' };
+    } catch (error) {
+      console.error('Error saving current day:', error);
+      return { success: false, message: error.message };
+    }
   },
 
   // 3ï¸âƒ£2ï¸âƒ£ Update Restaurant Info

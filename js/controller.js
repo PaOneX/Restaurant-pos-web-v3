@@ -644,6 +644,17 @@ const Controller = {
         }
     },
     
+    // Manually save current day to history
+    saveCurrentDayToHistory() {
+        const result = Model.saveCurrentDayToHistory();
+        if (result.success) {
+            View.showAlert('Current day orders saved to history!', 'success');
+            this.loadSalesHistory(); // Refresh the view
+        } else {
+            View.showAlert(result.message || 'No orders to save', 'info');
+        }
+    },
+    
     // View specific month details
     viewMonthDetails(monthKey) {
         try {

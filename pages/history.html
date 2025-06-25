@@ -39,9 +39,14 @@
 
 <!-- Sales History Page -->
 <div class="page-container">
-    <div class="page-header">
-        <h1><i class="fas fa-chart-line"></i> Sales History (Last 3 Months)</h1>
-        <p>View and analyze your restaurant's sales performance over the last 3 months</p>
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1><i class="fas fa-chart-line"></i> Sales History (Last 3 Months)</h1>
+            <p>View and analyze your restaurant's sales performance over the last 3 months</p>
+        </div>
+        <button class="btn btn-primary" onclick="Controller.saveCurrentDayToHistory()" title="Save today's orders to history">
+            <i class="fas fa-sync-alt"></i> Update with Today's Orders
+        </button>
     </div>
 
     <div id="salesHistoryContainer">
