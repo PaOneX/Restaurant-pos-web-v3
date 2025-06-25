@@ -904,8 +904,19 @@ const Model = {
               productTotals[product] = {
                 count: 0,
                 amount: 0,
-                category: day.productStats[product].category
+                category: day.productStats[product].category,
+                firstSoldDate: day.date,
+                lastSoldDate: day.date
               };
+            } else {
+              // Update last sold date
+              if (day.date > productTotals[product].lastSoldDate) {
+                productTotals[product].lastSoldDate = day.date;
+              }
+              // Update first sold date
+              if (day.date < productTotals[product].firstSoldDate) {
+                productTotals[product].firstSoldDate = day.date;
+              }
             }
             productTotals[product].count += day.productStats[product].count;
             productTotals[product].amount += day.productStats[product].amount;

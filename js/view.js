@@ -760,21 +760,53 @@ const View = {
 
         const allProductsTable = `
             <div class="top-products-card">
-                <h2><i class="fas fa-list-alt"></i> All Products Sold in 3 Months (${allProducts.length} Products)</h2>
+                <div class="products-header">
+                    <div>
+                        <h2><i class="fas fa-list-alt"></i> All Products Sold in 3 Months</h2>
+                        <p class="products-count">${allProducts.length} Products | ${summary.totalItems} Total Items Sold</p>
+                    </div>
+                    <div class="products-actions">
+                        <button class="btn btn-sm btn-export" onclick="View.exportProductsTable()">
+                            <i class="fas fa-file-excel"></i> Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-filters">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="productSearchInput" placeholder="Search products..." onkeyup="View.filterProductsTable()">
+                    </div>
+                    <div class="sort-controls">
+                        <label><i class="fas fa-sort"></i> Sort by:</label>
+                        <select id="productSortSelect" onchange="View.sortProductsTable()">
+                            <option value="qty-desc">Quantity (High to Low)</option>
+                            <option value="qty-asc">Quantity (Low to High)</option>
+                            <option value="revenue-desc">Revenue (High to Low)</option>
+                            <option value="revenue-asc">Revenue (Low to High)</option>
+                            <option value="date-desc">Recently Sold</option>
+                            <option value="date-asc">Oldest Sold</option>
+                            <option value="name-asc">Name (A to Z)</option>
+                            <option value="name-desc">Name (Z to A)</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="top-products-table">
+                    <table class="top-products-table" id="productsTable">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Product Name</th>
                                 <th>Category</th>
+                                <th>Date Range</th>
                                 <th>Total Qty Sold</th>
-                                <th>Unit Price Range</th>
+                                <th>Avg Unit Price</th>
                                 <th>Total Revenue</th>
                                 <th>% of Total</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="productsTableBody">
                             ${allProducts.map(([name, data], index) => {
                                 const percentOfTotal = summary.totalRevenue > 0 
                                     ? ((data.amount / summary.totalRevenue) * 100).toFixed(1) 
@@ -782,13 +814,19 @@ const View = {
                                 const avgPrice = data.count > 0 
                                     ? Model.formatCurrency(data.amount / data.count) 
                                     : 'N/A';
+                                const dateRange = data.firstSoldDate && data.lastSoldDate
+                                    ? (data.firstSoldDate === data.lastSoldDate 
+                                        ? new Date(data.firstSoldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                        : `${new Date(data.firstSoldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(data.lastSoldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`)
+                                    : 'N/A';
                                 return `
-                                    <tr>
+                                    <tr data-name="${name.toLowerCase()}" data-qty="${data.count}" data-revenue="${data.amount}" data-date="${data.lastSoldDate || ''}">
                                         <td data-label="#">${index + 1}</td>
                                         <td data-label="Product Name"><strong>${name}</strong></td>
                                         <td data-label="Category"><span class="category-badge">${data.category || 'N/A'}</span></td>
+                                        <td data-label="Date Range"><span class="date-range">${dateRange}</span></td>
                                         <td data-label="Total Qty Sold"><strong>${data.count}</strong></td>
-                                        <td data-label="Unit Price Range">${avgPrice}</td>
+                                        <td data-label="Avg Unit Price">${avgPrice}</td>
                                         <td data-label="Total Revenue"><strong>${Model.formatCurrency(data.amount)}</strong></td>
                                         <td data-label="% of Total">${percentOfTotal}%</td>
                                     </tr>
@@ -797,7 +835,8 @@ const View = {
                         </tbody>
                         <tfoot>
                             <tr style="background: var(--light-color); font-weight: bold;">
-                                <td colspan="3">TOTAL</td>
+                                <td colspan="3"><strong>TOTAL</strong></td>
+                                <td>-</td>
                                 <td><strong>${summary.totalItems}</strong></td>
                                 <td>-</td>
                                 <td><strong>${Model.formatCurrency(summary.totalRevenue)}</strong></td>
@@ -805,6 +844,10 @@ const View = {
                             </tr>
                         </tfoot>
                     </table>
+                </div>
+                
+                <div class="table-info">
+                    <span id="productsTableInfo">Showing ${allProducts.length} of ${allProducts.length} products</span>
                 </div>
             </div>
         `;
@@ -907,6 +950,168 @@ const View = {
         }
 
         this.showModal('monthDetailsModal');
-    }
-};
+    },
 
+    // Filter products table by search input
+    filterProductsTable() {
+        const searchInput = document.getElementById('productSearchInput');
+        const filter = searchInput ? searchInput.value.toLowerCase() : '';
+        const table = document.getElementById('productsTable');
+        const tbody = document.getElementById('productsTableBody');
+        
+        if (!tbody) return;
+        
+        const rows = tbody.getElementsByTagName('tr');
+        let visibleCount = 0;
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const name = row.getAttribute('data-name') || '';
+            
+            if (name.includes(filter)) {
+                row.style.display = '';
+                visibleCount++;
+                // Update ranking number
+                const firstCell = row.cells[0];
+                if (firstCell) firstCell.innerHTML = visibleCount;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+        
+        // Update info text
+        const infoEl = document.getElementById('productsTableInfo');
+        const totalCount = rows.length;
+        if (infoEl) {
+            infoEl.textContent = `Showing ${visibleCount} of ${totalCount} products`;
+        }
+    },
+
+    // Sort products table by selected criteria
+    sortProductsTable() {
+        const select = document.getElementById('productSortSelect');
+        const tbody = document.getElementById('productsTableBody');
+        
+        if (!select || !tbody) return;
+        
+        const sortBy = select.value;
+        const rows = Array.from(tbody.getElementsByTagName('tr'));
+        
+        rows.sort((a, b) => {
+            const nameA = a.getAttribute('data-name') || '';
+            const nameB = b.getAttribute('data-name') || '';
+            const qtyA = parseInt(a.getAttribute('data-qty')) || 0;
+            const qtyB = parseInt(b.getAttribute('data-qty')) || 0;
+            const revenueA = parseFloat(a.getAttribute('data-revenue')) || 0;
+            const revenueB = parseFloat(b.getAttribute('data-revenue')) || 0;
+            const dateA = a.getAttribute('data-date') || '';
+            const dateB = b.getAttribute('data-date') || '';
+            
+            switch(sortBy) {
+                case 'qty-desc':
+                    return qtyB - qtyA;
+                case 'qty-asc':
+                    return qtyA - qtyB;
+                case 'revenue-desc':
+                    return revenueB - revenueA;
+                case 'revenue-asc':
+                    return revenueA - revenueB;
+                case 'date-desc':
+                    return dateB.localeCompare(dateA);
+                case 'date-asc':
+                    return dateA.localeCompare(dateB);
+                case 'name-asc':
+                    return nameA.localeCompare(nameB);
+                case 'name-desc':
+                    return nameB.localeCompare(nameA);
+                default:
+                    return qtyB - qtyA;
+            }
+        });
+        
+        // Re-append sorted rows and update ranking
+        rows.forEach((row, index) => {
+            tbody.appendChild(row);
+            // Update ranking number if row is visible
+            if (row.style.display !== 'none') {
+                const firstCell = row.cells[0];
+                if (firstCell) firstCell.innerHTML = index + 1;
+            }
+        });
+        
+        // Re-apply filter to update rankings correctly
+        this.filterProductsTable();
+    },
+
+    // Export products table to CSV
+    exportProductsTable() {
+        const table = document.getElementById('productsTable');
+        if (!table) {
+            alert('No products table found');
+            return;
+        }
+        
+        let csv = [];
+        
+        // Add headers
+        const headers = [];
+        const headerCells = table.querySelectorAll('thead th');
+        headerCells.forEach(cell => headers.push(cell.textContent.trim()));
+        csv.push(headers.join(','));
+        
+        // Add visible rows
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cells = row.querySelectorAll('td');
+                const rowData = [];
+                cells.forEach(cell => {
+                    // Get text content, remove badge styling
+                    let text = cell.textContent.trim();
+                    // Wrap in quotes if contains comma
+                    if (text.includes(',')) {
+                        text = '"' + text + '"';
+                    }
+                    rowData.push(text);
+                });
+                csv.push(rowData.join(','));
+            }
+        });
+        
+        // Add footer/total row
+        const footerCells = table.querySelectorAll('tfoot td');
+        if (footerCells.length > 0) {
+            const footerData = [];
+            footerCells.forEach(cell => {
+                let text = cell.textContent.trim();
+                if (text.includes(',')) {
+                    text = '"' + text + '"';
+                }
+                footerData.push(text);
+            });
+            csv.push(footerData.join(','));
+        }
+        
+        // Create blob and download
+        const csvContent = csv.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        const date = new Date().toISOString().split('T')[0];
+        link.setAttribute('href', url);
+        link.setAttribute('download', `products_3months_${date}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show success message
+        Swal.fire({
+            icon: 'success',
+            title: 'Exported!',
+            text: 'Products table exported successfully',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }};
