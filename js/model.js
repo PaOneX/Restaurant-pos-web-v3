@@ -660,7 +660,7 @@ const Model = {
   loginUser(username, password) {
     // Simple authentication (in real app, use server-side)
     const users = this.getFromLocalStorage("users") || [
-      { username: "admin", password: "123", role: "admin" },
+      { username: "admin", password: "1234", role: "admin" },
       { username: "cashier", password: "cashier123", role: "cashier" },
     ];
 
