@@ -12,12 +12,16 @@ const Model = {
     serviceChargeRate: 0,
     discount: 0,
     currency: "Rs.",
-    adminPhone: "94716280311",
+    adminPhone: "",
     lastResetDate: null,
   },
   currentUser: null,
   paymentAmount: 0,
   orderCounter: 1,
+  
+  // Sales History (3 months retention)
+  salesHistory: [], // Array of monthly reports
+  maxHistoryMonths: 3,
 
   // Category hierarchy
   categoryHierarchy: {
@@ -723,11 +727,184 @@ const Model = {
   // Reset daily orders (called at midnight)
   resetDailyOrders() {
     const dailyReport = this.calculateDailyTotal();
+    
+    // Save daily report to monthly history
+    this.saveDailyReportToHistory(dailyReport);
+    
     this.orders = [];
     this.orderCounter = 1;
     this.saveToLocalStorage("orders", this.orders);
     this.saveToLocalStorage("orderCounter", this.orderCounter);
     return dailyReport;
+  },
+  
+  // Save daily report to monthly sales history
+  saveDailyReportToHistory(dailyReport) {
+    try {
+      const today = new Date();
+      const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      const dateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Load existing sales history
+      this.loadSalesHistory();
+      
+      // Find or create current month's record
+      let monthRecord = this.salesHistory.find(m => m.monthKey === monthKey);
+      
+      if (!monthRecord) {
+        monthRecord = {
+          monthKey: monthKey,
+          month: today.toLocaleString('default', { month: 'long', year: 'numeric' }),
+          year: today.getFullYear(),
+          monthNumber: today.getMonth() + 1,
+          dailyReports: [],
+          totalOrders: 0,
+          totalRevenue: 0,
+          totalItems: 0
+        };
+        this.salesHistory.push(monthRecord);
+      }
+      
+      // Get detailed stats for the day
+      const stats = this.getDetailedOrderStats();
+      
+      // Add daily report
+      monthRecord.dailyReports.push({
+        date: dateKey,
+        dateFormatted: today.toLocaleDateString(),
+        orders: dailyReport.orderCount,
+        revenue: dailyReport.total,
+        items: stats.totalItems,
+        categoryStats: stats.categoryStats,
+        productStats: stats.productStats,
+        timestamp: Date.now()
+      });
+      
+      // Update month totals
+      monthRecord.totalOrders += dailyReport.orderCount;
+      monthRecord.totalRevenue += dailyReport.total;
+      monthRecord.totalItems += stats.totalItems;
+      
+      // Clean up old months (keep only last 3 months)
+      this.cleanupOldSalesHistory();
+      
+      // Save to localStorage
+      this.saveToLocalStorage('salesHistory', this.salesHistory);
+      
+      console.log(`✅ Daily report saved to history: ${dateKey}`);
+    } catch (error) {
+      console.error('Error saving daily report to history:', error);
+    }
+  },
+  
+  // Load sales history from localStorage
+  loadSalesHistory() {
+    try {
+      const history = this.getFromLocalStorage('salesHistory');
+      this.salesHistory = history || [];
+      
+      // Clean up on load (in case cleanup was missed)
+      this.cleanupOldSalesHistory();
+      
+      return this.salesHistory;
+    } catch (error) {
+      console.error('Error loading sales history:', error);
+      this.salesHistory = [];
+      return [];
+    }
+  },
+  
+  // Clean up sales history older than 3 months
+  cleanupOldSalesHistory() {
+    try {
+      const today = new Date();
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(today.getMonth() - this.maxHistoryMonths);
+      
+      const cutoffKey = `${threeMonthsAgo.getFullYear()}-${String(threeMonthsAgo.getMonth() + 1).padStart(2, '0')}`;
+      
+      // Filter out months older than 3 months
+      const beforeCount = this.salesHistory.length;
+      this.salesHistory = this.salesHistory.filter(month => month.monthKey >= cutoffKey);
+      
+      const deletedCount = beforeCount - this.salesHistory.length;
+      if (deletedCount > 0) {
+        console.log(`🗑️  Cleaned up ${deletedCount} old month(s) from sales history`);
+        this.saveToLocalStorage('salesHistory', this.salesHistory);
+      }
+    } catch (error) {
+      console.error('Error cleaning up sales history:', error);
+    }
+  },
+  
+  // Get sales history (last 3 months)
+  getSalesHistory() {
+    this.loadSalesHistory();
+    // Sort by month (newest first)
+    return this.salesHistory.sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+  },
+  
+  // Get specific month's history
+  getMonthHistory(monthKey) {
+    this.loadSalesHistory();
+    return this.salesHistory.find(m => m.monthKey === monthKey);
+  },
+  
+  // Get sales summary for all 3 months
+  getThreeMonthSummary() {
+    this.loadSalesHistory();
+    
+    let totalOrders = 0;
+    let totalRevenue = 0;
+    let totalItems = 0;
+    const categoryTotals = {};
+    const productTotals = {};
+    
+    this.salesHistory.forEach(month => {
+      totalOrders += month.totalOrders;
+      totalRevenue += month.totalRevenue;
+      totalItems += month.totalItems;
+      
+      // Aggregate daily reports for detailed stats
+      month.dailyReports.forEach(day => {
+        // Category totals
+        if (day.categoryStats) {
+          Object.keys(day.categoryStats).forEach(category => {
+            if (!categoryTotals[category]) {
+              categoryTotals[category] = { count: 0, amount: 0 };
+            }
+            categoryTotals[category].count += day.categoryStats[category].count;
+            categoryTotals[category].amount += day.categoryStats[category].amount;
+          });
+        }
+        
+        // Product totals
+        if (day.productStats) {
+          Object.keys(day.productStats).forEach(product => {
+            if (!productTotals[product]) {
+              productTotals[product] = {
+                count: 0,
+                amount: 0,
+                category: day.productStats[product].category
+              };
+            }
+            productTotals[product].count += day.productStats[product].count;
+            productTotals[product].amount += day.productStats[product].amount;
+          });
+        }
+      });
+    });
+    
+    return {
+      months: this.salesHistory,
+      totalOrders,
+      totalRevenue,
+      totalItems,
+      categoryTotals,
+      productTotals,
+      averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+      averageItemsPerOrder: totalOrders > 0 ? totalItems / totalOrders : 0
+    };
   },
   // ========================================
   // 5. SETTINGS MANAGEMENT

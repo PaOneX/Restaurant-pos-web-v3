@@ -661,6 +661,230 @@ const View = {
 
     hideLoginForm() {
         this.hideModal('loginModal');
+    },
+
+    // ========================================
+    // 11. SALES HISTORY VIEW FUNCTIONS
+    // ========================================
+
+    // Render 3-month sales history
+    renderSalesHistory(summary) {
+        const historyContainer = document.getElementById('salesHistoryContainer');
+        if (!historyContainer) return;
+
+        if (summary.months.length === 0) {
+            historyContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-chart-line fa-3x"></i>
+                    <h3>No Sales History</h3>
+                    <p>Sales history will appear here once you start recording daily sales.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Overall Summary Card
+        const summaryCard = `
+            <div class="summary-card">
+                <h2><i class="fas fa-chart-bar"></i> 3-Month Summary</h2>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <i class="fas fa-shopping-cart"></i>
+                        <div>
+                            <h3>${summary.totalOrders}</h3>
+                            <p>Total Orders</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <i class="fas fa-utensils"></i>
+                        <div>
+                            <h3>${summary.totalItems}</h3>
+                            <p>Items Sold</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <i class="fas fa-dollar-sign"></i>
+                        <div>
+                            <h3>${Model.formatCurrency(summary.totalRevenue)}</h3>
+                            <p>Total Revenue</p>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <i class="fas fa-receipt"></i>
+                        <div>
+                            <h3>${Model.formatCurrency(summary.averageOrderValue)}</h3>
+                            <p>Avg Order Value</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="export-section">
+                    <button class="btn btn-primary" onclick="Controller.exportSalesHistory()">
+                        <i class="fab fa-whatsapp"></i> Export to WhatsApp
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Monthly Cards
+        const monthlyCards = summary.months.map(month => `
+            <div class="month-card" onclick="Controller.viewMonthDetails('${month.monthKey}')">
+                <div class="month-header">
+                    <h3><i class="fas fa-calendar-alt"></i> ${month.month}</h3>
+                    <span class="month-badge">${month.dailyReports.length} days</span>
+                </div>
+                <div class="month-stats">
+                    <div class="stat-row">
+                        <span><i class="fas fa-shopping-bag"></i> Orders:</span>
+                        <strong>${month.totalOrders}</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span><i class="fas fa-box"></i> Items:</span>
+                        <strong>${month.totalItems}</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span><i class="fas fa-money-bill-wave"></i> Revenue:</span>
+                        <strong>${Model.formatCurrency(month.totalRevenue)}</strong>
+                    </div>
+                </div>
+                <div class="month-footer">
+                    <button class="btn-view-details">
+                        View Details <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        // Top Products Section
+        const topProducts = Object.entries(summary.productTotals)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 10);
+
+        const topProductsTable = `
+            <div class="top-products-card">
+                <h2><i class="fas fa-trophy"></i> Top 10 Products</h2>
+                <table class="top-products-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Qty Sold</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${topProducts.map(([name, data], index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${name}</td>
+                                <td>${data.category || 'N/A'}</td>
+                                <td>${data.count}</td>
+                                <td>${Model.formatCurrency(data.amount)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        historyContainer.innerHTML = summaryCard + 
+            '<h2 class="section-title"><i class="fas fa-calendar"></i> Monthly Breakdown</h2>' +
+            '<div class="months-grid">' + monthlyCards + '</div>' + 
+            topProductsTable;
+    },
+
+    // Show month details in modal
+    showMonthDetailsModal(monthData) {
+        const modal = document.getElementById('monthDetailsModal');
+        if (!modal) {
+            // Create modal if it doesn't exist
+            const modalHTML = `
+                <div id="monthDetailsModal" class="modal">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h2 id="monthDetailsTitle"></h2>
+                            <button class="close close-prominent" onclick="View.hideModal('monthDetailsModal')" aria-label="Close">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="monthDetailsBody" class="modal-body"></div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        const titleEl = document.getElementById('monthDetailsTitle');
+        const bodyEl = document.getElementById('monthDetailsBody');
+
+        if (titleEl) {
+            titleEl.innerHTML = `<i class="fas fa-calendar-alt"></i> ${monthData.month} - Detailed Report`;
+        }
+
+        if (bodyEl) {
+            const dailyReports = monthData.dailyReports
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .map(day => `
+                    <tr>
+                        <td>${day.dateFormatted}</td>
+                        <td>${day.orders}</td>
+                        <td>${day.items}</td>
+                        <td>${Model.formatCurrency(day.revenue)}</td>
+                    </tr>
+                `).join('');
+
+            bodyEl.innerHTML = `
+                <div class="month-details-summary">
+                    <div class="detail-stat">
+                        <i class="fas fa-shopping-cart"></i>
+                        <div>
+                            <h3>${monthData.totalOrders}</h3>
+                            <p>Total Orders</p>
+                        </div>
+                    </div>
+                    <div class="detail-stat">
+                        <i class="fas fa-boxes"></i>
+                        <div>
+                            <h3>${monthData.totalItems}</h3>
+                            <p>Items Sold</p>
+                        </div>
+                    </div>
+                    <div class="detail-stat">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <div>
+                            <h3>${Model.formatCurrency(monthData.totalRevenue)}</h3>
+                            <p>Total Revenue</p>
+                        </div>
+                    </div>
+                    <div class="detail-stat">
+                        <i class="fas fa-calendar-day"></i>
+                        <div>
+                            <h3>${monthData.dailyReports.length}</h3>
+                            <p>Trading Days</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-list"></i> Daily Breakdown</h3>
+                <div class="table-responsive">
+                    <table class="details-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Orders</th>
+                                <th>Items</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dailyReports}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        this.showModal('monthDetailsModal');
     }
 };
 

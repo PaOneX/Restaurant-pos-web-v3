@@ -2090,6 +2090,406 @@ table tbody tr:hover {
     }
 }
 
+/* ========================================
+   SALES HISTORY PAGE STYLES
+======================================== */
+
+/* Summary Card */
+.summary-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 2rem;
+}
+
+.summary-card h2 {
+    color: var(--dark-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-color);
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+
+.summary-item:hover {
+    transform: translateY(-2px);
+}
+
+.summary-item i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.summary-item h3 {
+    font-size: 1.5rem;
+    color: var(--dark-color);
+    margin: 0;
+}
+
+.summary-item p {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.export-section {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.export-section .btn {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+}
+
+/* Section Title */
+.section-title {
+    color: var(--dark-color);
+    margin: 2rem 0 1rem;
+    font-size: 1.3rem;
+}
+
+/* Months Grid */
+.months-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.month-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.month-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+}
+
+.month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--light-color);
+}
+
+.month-header h3 {
+    color: var(--dark-color);
+    font-size: 1.2rem;
+}
+
+.month-badge {
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.month-stats {
+    margin: 1rem 0;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.stat-row span {
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-row i {
+    color: var(--primary-color);
+    width: 20px;
+}
+
+.stat-row strong {
+    color: var(--dark-color);
+}
+
+.month-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--light-color);
+}
+
+.btn-view-details {
+    width: 100%;
+    padding: 0.6rem;
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background 0.3s;
+}
+
+.btn-view-details:hover {
+    background: var(--secondary-color);
+}
+
+/* Top Products Card */
+.top-products-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    margin-top: 2rem;
+}
+
+.top-products-card h2 {
+    color: var(--dark-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.top-products-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.top-products-table thead {
+    background: var(--light-color);
+}
+
+.top-products-table th,
+.top-products-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.top-products-table th {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.top-products-table tbody tr:hover {
+    background: var(--light-color);
+}
+
+.top-products-table td:first-child {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.top-products-table td:last-child,
+.top-products-table th:last-child {
+    text-align: right;
+}
+
+/* Month Details Modal */
+.modal-large {
+    max-width: 900px;
+    width: 90%;
+}
+
+.month-details-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.detail-stat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-color);
+    border-radius: 8px;
+}
+
+.detail-stat i {
+    font-size: 2rem;
+    color: var(--primary-color);
+}
+
+.detail-stat h3 {
+    font-size: 1.5rem;
+    color: var(--dark-color);
+    margin: 0;
+}
+
+.detail-stat p {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.details-table thead {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.details-table th,
+.details-table td {
+    padding: 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.details-table tbody tr:nth-child(even) {
+    background: var(--light-color);
+}
+
+.details-table tbody tr:hover {
+    background: #e0e7ff;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+/* Prominent Close Button for Month Details Modal */
+.close-prominent {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--danger-color);
+    color: var(--white);
+    border: 2px solid var(--white);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+.close-prominent:hover {
+    background: #dc2626;
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+}
+
+.close-prominent:active {
+    transform: scale(0.95) rotate(90deg);
+}
+
+.close-prominent i {
+    pointer-events: none;
+}
+
+/* Adjust modal header for prominent button */
+.modal-large .modal-header {
+    position: relative;
+    padding-right: 4rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.empty-state i {
+    color: var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-color);
+}
+
+/* Responsive Design for Sales History */
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .months-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .month-details-summary {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .top-products-table {
+        font-size: 0.9rem;
+    }
+
+    .top-products-table th,
+    .top-products-table td {
+        padding: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-card,
+    .top-products-card {
+        padding: 1rem;
+    }
+
+    .summary-card h2,
+    .top-products-card h2 {
+        font-size: 1.2rem;
+    }
+
+    .month-details-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Print Optimization */
 @media print {
     .header,
