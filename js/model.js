@@ -683,6 +683,11 @@ const Model = {
     this.orders.forEach((order) => {
       totalAmount += order.totals?.total || order.total || 0;
 
+      // Check if order has items array
+      if (!order.items || !Array.isArray(order.items)) {
+        return;
+      }
+
       order.items.forEach((item) => {
         // Get the product to find its category
         const product = this.getProductById(item.productId);
@@ -1367,6 +1372,20 @@ const Model = {
       return { success: false, error: "Product not found" };
     }
 
+    // Check stock for beverages
+    if (product.mainCategory === "Beverages" && product.stock !== undefined) {
+      const existingItem = this.currentOrder.items.find(item => item.productId === productId);
+      const currentQtyInOrder = existingItem ? existingItem.quantity : 0;
+      const totalNeeded = currentQtyInOrder + quantity;
+      
+      if (product.stock < totalNeeded) {
+        return { 
+          success: false, 
+          error: `Insufficient stock for ${product.name}. Available: ${product.stock}, In order: ${currentQtyInOrder}` 
+        };
+      }
+    }
+
     // Check if item already in order
     const existingItem = this.currentOrder.items.find(item => item.productId === productId);
     
@@ -1395,6 +1414,10 @@ const Model = {
       return { success: false, error: "No active order" };
     }
 
+    if (!this.currentOrder.items || !Array.isArray(this.currentOrder.items)) {
+      return { success: false, error: "Order has no items" };
+    }
+
     const item = this.currentOrder.items.find(i => i.productId === productId);
     if (!item) {
       return { success: false, error: "Item not found in order" };
@@ -1402,6 +1425,17 @@ const Model = {
 
     if (quantity <= 0) {
       return this.removeItemFromOrder(productId);
+    }
+
+    // Check stock for beverages
+    const product = this.getProductById(productId);
+    if (product && product.mainCategory === "Beverages" && product.stock !== undefined) {
+      if (product.stock < quantity) {
+        return { 
+          success: false, 
+          error: `Insufficient stock for ${product.name}. Available: ${product.stock}` 
+        };
+      }
     }
 
     item.quantity = quantity;
@@ -1419,6 +1453,10 @@ const Model = {
       return { success: false, error: "No active order" };
     }
 
+    if (!this.currentOrder.items || !Array.isArray(this.currentOrder.items)) {
+      return { success: false, error: "Order has no items" };
+    }
+
     const index = this.currentOrder.items.findIndex(i => i.productId === productId);
     if (index === -1) {
       return { success: false, error: "Item not found in order" };
@@ -1434,6 +1472,10 @@ const Model = {
   // Update order totals
   updateOrderTotals() {
     if (!this.currentOrder) return;
+
+    if (!this.currentOrder.items || !Array.isArray(this.currentOrder.items)) {
+      this.currentOrder.items = [];
+    }
 
     // Calculate subtotal
     this.currentOrder.subtotal = this.currentOrder.items.reduce((sum, item) => {
@@ -1463,7 +1505,7 @@ const Model = {
       return { success: false, error: "No active order" };
     }
 
-    if (this.currentOrder.items.length === 0) {
+    if (!this.currentOrder.items || this.currentOrder.items.length === 0) {
       return { success: false, error: "Order is empty" };
     }
 
@@ -1480,7 +1522,7 @@ const Model = {
       return { success: false, error: "No active order" };
     }
 
-    if (this.currentOrder.items.length === 0) {
+    if (!this.currentOrder.items || this.currentOrder.items.length === 0) {
       return { success: false, error: "Order is empty" };
     }
 
@@ -1509,6 +1551,16 @@ const Model = {
     if (this.currentOrder.status !== "PAID") {
       return { success: false, error: "Order must be paid before closing" };
     }
+
+    // Deduct stock for beverages
+    this.currentOrder.items.forEach(item => {
+      const product = this.getProductById(item.productId);
+      if (product && product.mainCategory === "Beverages" && product.stock !== undefined) {
+        product.stock -= item.quantity;
+        if (product.stock < 0) product.stock = 0;
+      }
+    });
+    this.saveToLocalStorage("products", this.products);
 
     // Move to order history
     this.currentOrder.status = "CLOSED";

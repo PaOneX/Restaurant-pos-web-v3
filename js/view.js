@@ -48,17 +48,29 @@ const View = {
             return;
         }
 
-        grid.innerHTML = products.map(product => `
-            <div class="product-card" onclick="Controller.addToCart('${product.id}')">
+        grid.innerHTML = products.map(product => {
+            const isBeverage = product.mainCategory === 'Beverages';
+            const hasStock = product.stock !== undefined;
+            const outOfStock = isBeverage && hasStock && product.stock === 0;
+            const lowStock = isBeverage && hasStock && product.stock > 0 && product.stock <= 5;
+            
+            return `
+            <div class="product-card ${outOfStock ? 'out-of-stock' : ''}" onclick="${outOfStock ? '' : `Controller.addToCart('${product.id}')`}">
                 <div class="product-icon">
                     <i class="fas fa-utensils"></i>
                 </div>
                 <h4>${product.name}</h4>
                 <p class="category">${product.subCategory || product.category || 'Uncategorized'}</p>
                 <p class="price">${Model.formatCurrency(product.price)}</p>
-                <p class="stock">Stock: ${product.stock}</p>
+                ${isBeverage && hasStock ? `
+                    <p class="stock ${outOfStock ? 'stock-out' : lowStock ? 'stock-low' : 'stock-ok'}">
+                        ${outOfStock ? 'OUT OF STOCK' : `Stock: ${product.stock}`}
+                    </p>
+                ` : ''}
+                ${outOfStock ? '<div class="out-of-stock-overlay">OUT OF STOCK</div>' : ''}
             </div>
-        `).join('');
+            `;
+        }).join('');
     },
 
     // Render POS Main Category Filters
@@ -324,7 +336,7 @@ const View = {
                             </tr>
                         </thead>
                         <tbody>
-                            ${order.items.map(item => `
+                            ${(order.items || []).map(item => `
                                 <tr>
                                     <td>${item.name}</td>
                                     <td>${item.quantity}</td>
@@ -1280,12 +1292,24 @@ const View = {
             return;
         }
 
-        grid.innerHTML = products.map(product => `
-            <div class="product-card-small" onclick="Controller.addItemToDiningOrder('${product.id}')">
+        grid.innerHTML = products.map(product => {
+            const isBeverage = product.mainCategory === 'Beverages';
+            const hasStock = product.stock !== undefined;
+            const outOfStock = isBeverage && hasStock && product.stock === 0;
+            const lowStock = isBeverage && hasStock && product.stock > 0 && product.stock <= 5;
+            
+            return `
+            <div class="product-card-small ${outOfStock ? 'out-of-stock' : ''}" onclick="${outOfStock ? '' : `Controller.addItemToDiningOrder('${product.id}')`}">
                 <div class="product-name">${Security.escapeHTML(product.name)}</div>
                 <div class="product-price">${Model.formatCurrency(product.price)}</div>
+                ${isBeverage && hasStock ? `
+                    <div class="product-stock ${outOfStock ? 'stock-out' : lowStock ? 'stock-low' : 'stock-ok'}">
+                        ${outOfStock ? 'OUT' : product.stock}
+                    </div>
+                ` : ''}
             </div>
-        `).join('');
+            `;
+        }).join('');
     },
 
     // Render Dining Category Filters
@@ -1395,7 +1419,7 @@ const View = {
                         </tr>
                     </thead>
                     <tbody>
-                        ${order.items.map(item => `
+                        ${(order.items || []).map(item => `
                             <tr>
                                 <td>${Security.escapeHTML(item.name)}</td>
                                 <td>${item.quantity}</td>
@@ -1465,7 +1489,7 @@ const View = {
                         </tr>
                     </thead>
                     <tbody>
-                        ${order.items.map(item => `
+                        ${(order.items || []).map(item => `
                             <tr>
                                 <td>${Security.escapeHTML(item.name)}</td>
                                 <td>${item.quantity}</td>
