@@ -13,6 +13,7 @@ const Model = {
   orders: [],
   settings: {
     serviceChargeRate: 10,
+    diningServiceChargeRate: 10,
     discount: 0,
     currency: "Rs.",
     adminPhone: "",
@@ -994,7 +995,16 @@ const Model = {
   loadSettings() {
     const settings = this.getFromLocalStorage("settings");
     if (settings) {
-      this.settings = settings;
+      // Merge with defaults to ensure new properties exist
+      this.settings = {
+        serviceChargeRate: 10,
+        diningServiceChargeRate: 10,
+        discount: 0,
+        currency: "Rs.",
+        adminPhone: "",
+        lastResetDate: null,
+        ...settings
+      };
     }
     return this.settings;
   },
@@ -1482,8 +1492,10 @@ const Model = {
       return sum + (item.subtotal || 0);
     }, 0);
 
-    // Calculate service charge (fixed at 10% for dining orders)
-    const serviceRate = this.currentOrder.orderType === 'DINING' ? 10 : parseFloat(this.settings.serviceChargeRate) || 0;
+    // Calculate service charge (separate rate for dining vs takeaway)
+    const serviceRate = this.currentOrder.orderType === 'DINING' 
+      ? parseFloat(this.settings.diningServiceChargeRate) || 0 
+      : parseFloat(this.settings.serviceChargeRate) || 0;
     this.currentOrder.serviceCharge = (this.currentOrder.subtotal * serviceRate) / 100;
 
     // Calculate discount

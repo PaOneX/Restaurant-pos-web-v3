@@ -746,6 +746,7 @@ const Controller = {
     updateSettings() {
         const settingsData = {
             serviceCharge: document.getElementById('serviceChargeRate').value,
+            diningServiceCharge: document.getElementById('diningServiceChargeRate').value,
             discount: document.getElementById('discountRate').value,
             phone: document.getElementById('adminPhone').value
         };
@@ -759,8 +760,14 @@ const Controller = {
 
         const sanitized = validation.sanitizedData;
         
-        //  Set service charge rate
+        //  Set service charge rate (takeaway)
         Model.setServiceChargeRate(sanitized.serviceCharge);
+        
+        //  Set dining service charge rate
+        if (sanitized.diningServiceCharge !== undefined) {
+            Model.settings.diningServiceChargeRate = parseFloat(sanitized.diningServiceCharge) || 0;
+            Model.saveToLocalStorage('settings', Model.settings);
+        }
         
         //  Apply discount
         Model.applyDiscount(sanitized.discount);
@@ -771,6 +778,16 @@ const Controller = {
         View.showAlert('Settings updated successfully!', 'success');
         this.updateSettingsUI();
         this.renderCart(); // Update totals
+        
+        // Update dining order totals if there's an active order
+        if (Model.getCurrentOrder()) {
+            Model.updateOrderTotals();
+            const currentOrder = Model.getCurrentOrder();
+            View.renderCurrentOrderInfo(currentOrder);
+            View.renderDiningOrderItems(currentOrder);
+            View.updateDiningOrderSummary(currentOrder);
+        }
+        
         this.updateRestaurantNameInHeader(); // Update header name
     },
 

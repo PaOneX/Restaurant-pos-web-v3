@@ -443,6 +443,7 @@ const View = {
     updateSettingsDisplay(settings) {
         const nameInput = document.getElementById('restaurantName');
         const serviceChargeInput = document.getElementById('serviceChargeRate');
+        const diningServiceChargeInput = document.getElementById('diningServiceChargeRate');
         const discountInput = document.getElementById('discountRate');
         const phoneInput = document.getElementById('adminPhone');
 
@@ -453,6 +454,7 @@ const View = {
             nameInput.title = "Developer Only: Change RESTAURANT_NAME in model.js";
         }
         if (serviceChargeInput) serviceChargeInput.value = settings.serviceChargeRate;
+        if (diningServiceChargeInput) diningServiceChargeInput.value = settings.diningServiceChargeRate || 10;
         if (discountInput) discountInput.value = settings.discount;
         if (phoneInput) phoneInput.value = settings.adminPhone || '';
 
@@ -1362,18 +1364,28 @@ const View = {
 
     // Update Dining Order Summary
     updateDiningOrderSummary(order) {
+        const subtotalEl = document.getElementById('diningSubtotal');
+        const serviceChargeEl = document.getElementById('diningServiceCharge');
+        const discountEl = document.getElementById('diningDiscount');
+        const totalEl = document.getElementById('diningTotal');
+        
+        // Check if dining page elements exist
+        if (!subtotalEl || !serviceChargeEl || !discountEl || !totalEl) {
+            return; // Not on dining page
+        }
+        
         if (!order) {
-            document.getElementById('diningSubtotal').textContent = Model.formatCurrency(0);
-            document.getElementById('diningServiceCharge').textContent = Model.formatCurrency(0);
-            document.getElementById('diningDiscount').textContent = Model.formatCurrency(0);
-            document.getElementById('diningTotal').textContent = Model.formatCurrency(0);
+            subtotalEl.textContent = Model.formatCurrency(0);
+            serviceChargeEl.textContent = Model.formatCurrency(0);
+            discountEl.textContent = Model.formatCurrency(0);
+            totalEl.textContent = Model.formatCurrency(0);
             return;
         }
 
-        document.getElementById('diningSubtotal').textContent = Model.formatCurrency(order.subtotal || 0);
-        document.getElementById('diningServiceCharge').textContent = Model.formatCurrency(order.serviceCharge || 0);
-        document.getElementById('diningDiscount').textContent = Model.formatCurrency(order.discount || 0);
-        document.getElementById('diningTotal').textContent = Model.formatCurrency(order.total || 0);
+        subtotalEl.textContent = Model.formatCurrency(order.subtotal || 0);
+        serviceChargeEl.textContent = Model.formatCurrency(order.serviceCharge || 0);
+        discountEl.textContent = Model.formatCurrency(order.discount || 0);
+        totalEl.textContent = Model.formatCurrency(order.total || 0);
     },
 
     // Show/Hide Dining Order Panels
