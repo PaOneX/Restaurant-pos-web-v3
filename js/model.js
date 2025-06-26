@@ -659,6 +659,45 @@ const Model = {
   getAllOrders() {
     return this.orders;
   },
+  
+  // Get today's orders only
+  getTodayOrders() {
+    const today = new Date();
+    const todayDateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    return this.orders.filter(order => {
+      if (!order.date) return false; // Exclude if no date
+      
+      // Priority 1: Use dateOnly if available (new format)
+      if (order.date.dateOnly) {
+        return order.date.dateOnly === todayDateString;
+      }
+      
+      // Priority 2: Use timestamp if available
+      if (order.date.timestamp) {
+        const orderDateString = new Date(order.date.timestamp).toISOString().split('T')[0];
+        return orderDateString === todayDateString;
+      }
+      
+      // Priority 3: Use createdAt for call orders
+      if (order.createdAt) {
+        const orderDateString = new Date(order.createdAt).toISOString().split('T')[0];
+        return orderDateString === todayDateString;
+      }
+      
+      // Priority 4: Try to parse locale date string
+      if (order.date.date) {
+        const orderDate = new Date(order.date.date);
+        if (!isNaN(orderDate.getTime())) {
+          const orderDateString = orderDate.toISOString().split('T')[0];
+          return orderDateString === todayDateString;
+        }
+      }
+      
+      // Fallback: exclude old orders without proper date
+      return false;
+    });
+  },
 
   // Calculate daily total
   calculateDailyTotal() {
@@ -1140,6 +1179,8 @@ const Model = {
       date: now.toLocaleDateString(),
       time: now.toLocaleTimeString(),
       full: now.toLocaleString(),
+      timestamp: now.toISOString(), // Add ISO timestamp for reliable date comparison
+      dateOnly: now.toISOString().split('T')[0] // YYYY-MM-DD format
     };
   },
 

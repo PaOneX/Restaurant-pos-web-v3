@@ -10,7 +10,6 @@ const Controller = {
 
     //  Initialize System
     initSystem() {
-        console.log('🚀 Initializing Restaurant POS System...');
         
         // Load all data from storage
         Model.loadProductsFromStorage();
@@ -33,8 +32,38 @@ const Controller = {
 
         // Setup event listeners
         this.setupEventListeners();
+        
+        // Setup midnight auto-reset checker (checks every minute)
+        this.setupMidnightChecker();
 
         console.log('✅ System initialized successfully');
+    },
+    
+    // Setup automatic midnight reset checker
+    setupMidnightChecker() {
+        // Check every minute for midnight reset
+        setInterval(() => {
+            const report = Model.checkDailyReset();
+            if (report && report.orderCount > 0) {
+                
+                // Show notification
+                Swal.fire({
+                    title: 'New Day Started!',
+                    text: `Previous day's orders (${report.orderCount} orders, ${Model.formatCurrency(report.totalRevenue)}) have been saved to Sales History.`,
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+                
+                // Refresh orders page if currently viewing it
+                const currentPage = document.querySelector('.nav-link.active');
+                if (currentPage && currentPage.textContent.includes('Orders')) {
+                    this.loadOrders();
+                }
+                
+                // Send WhatsApp report
+                this.sendDailyReportToWhatsApp(report);
+            }
+        }, 60000); // Check every 60 seconds
     },
 
     // Setup event listeners
@@ -891,9 +920,21 @@ const Controller = {
     // 5. ORDER MANAGEMENT
     // ========================================
 
-    //  Load Orders
+    //  Load Orders (Today's orders only)
     loadOrders() {
-        const orders = Model.getAllOrders();
+        // Check for daily reset before loading orders
+        const report = Model.checkDailyReset();
+        if (report && report.orderCount > 0) {
+            Swal.fire({
+                title: 'New Day Started!',
+                text: `Yesterday's orders (${report.orderCount} orders, ${Model.formatCurrency(report.totalRevenue)}) have been moved to Sales History.`,
+                icon: 'info',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }
+        
+        const orders = Model.getTodayOrders();
         View.renderOrdersTable(orders);
     },
 
