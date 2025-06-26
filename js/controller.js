@@ -615,6 +615,12 @@ const Controller = {
             
             // Refresh products display to show updated stock
             this.loadProductsToPOS();
+            
+            // Refresh orders page if it's currently active
+            const currentPage = document.querySelector('.nav-link.active');
+            if (currentPage && currentPage.textContent.includes('Orders')) {
+                this.loadOrders();
+            }
         } catch (error) {
             console.error('Error in printBill:', error);
             View.showAlert('Error processing order: ' + error.message, 'error');
