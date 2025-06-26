@@ -3429,7 +3429,23 @@ table tbody tr:hover {
     font-size: 14px;
 }
 
-/* Print Styles */
+/* ========================================
+   PRINT STYLES FOR RECEIPT PRINTERS
+   Optimized for 80mm thermal printers
+======================================== */
+
+@page {
+    size: 80mm auto; /* 80mm width, auto height for thermal printers */
+    margin: 0; /* Remove margins for thermal printers */
+}
+
+/* Alternative for 58mm thermal printers - uncomment if needed
+@page {
+    size: 58mm auto;
+    margin: 0;
+}
+*/
+
 @media print {
     body * {
         visibility: hidden;
@@ -3443,13 +3459,113 @@ table tbody tr:hover {
         position: absolute;
         left: 0;
         top: 0;
-        width: 80mm;
-        padding: 10mm;
+        width: 80mm; /* Match thermal printer width */
+        max-width: 80mm;
+        padding: 5mm;
+        margin: 0;
+        font-size: 11pt; /* Readable size for receipts */
+        background: white;
+    }
+    
+    /* For 58mm printers - uncomment if needed
+    .receipt {
+        width: 58mm;
+        max-width: 58mm;
+        font-size: 9pt;
+    }
+    */
+    
+    .receipt-header h2 {
+        font-size: 14pt;
+        margin-bottom: 5px;
+    }
+    
+    .receipt-header p {
+        font-size: 10pt;
+        margin: 2px 0;
+    }
+    
+    .receipt-info p {
+        font-size: 10pt;
+        margin: 3px 0;
+    }
+    
+    .receipt-table {
+        width: 100%;
+        font-size: 9pt;
+        border-collapse: collapse;
+        table-layout: fixed; /* Ensures columns respect width percentages */
+    }
+    
+    .receipt-table th {
+        padding: 5px 2px;
+        border-bottom: 1px solid #000;
+        font-weight: bold;
+        font-size: 9pt;
+    }
+    
+    .receipt-table td {
+        padding: 4px 2px;
+        border-bottom: 1px dashed #ccc;
+        word-wrap: break-word;
+        font-size: 9pt;
+        vertical-align: top;
+    }
+    
+    /* Allow long item names to wrap properly */
+    .receipt-table td:first-child {
+        max-width: 45mm;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .receipt-total {
+        font-size: 10pt;
+        margin-top: 10px;
+    }
+    
+    .receipt-total .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 2px 0;
+    }
+    
+    .receipt-total .grand-total {
+        font-size: 12pt;
+        font-weight: bold;
+        border-top: 2px solid #000;
+        margin-top: 5px;
+        padding-top: 5px;
+    }
+    
+    .receipt-footer {
+        font-size: 9pt;
+        margin-top: 10px;
     }
     
     .modal-actions,
-    .modal-close {
+    .modal-close,
+    .no-print {
         display: none !important;
+    }
+    
+    /* Ensure page breaks work properly */
+    .receipt {
+        page-break-after: always;
+    }
+}
+
+/* Print Styles for A4 Printers (if you want to print on regular paper) */
+@media print and (min-width: 210mm) {
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
+    
+    .receipt {
+        width: 100%;
+        max-width: 210mm;
+        padding: 15mm;
     }
 }
 

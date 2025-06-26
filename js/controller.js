@@ -485,8 +485,41 @@ const Controller = {
         }
 
         try {
-            //  Save order first
-            const order = Model.saveOrder();
+            // Check if this is a call order being completed
+            const callOrderId = sessionStorage.getItem('activeCallOrderId');
+            let order;
+
+            if (callOrderId) {
+                // This is a call order - update and close the existing order
+                const existingOrder = Model.activeOrders.find(o => (o.orderId || o.id) === callOrderId);
+                
+                if (existingOrder) {
+                    // Update order with payment details
+                    existingOrder.paymentAmount = paymentAmount;
+                    existingOrder.balance = paymentAmount - totals.total;
+                    existingOrder.status = 'PAID';
+                    existingOrder.finalBillPrintedAt = new Date().toISOString();
+                    
+                    // Move to completed orders
+                    Model.orders.push(existingOrder);
+                    Model.saveToLocalStorage('orders', Model.orders);
+                    
+                    // Remove from active orders
+                    Model.activeOrders = Model.activeOrders.filter(o => (o.orderId || o.id) !== callOrderId);
+                    Model.saveActiveOrders();
+                    
+                    // Clear session storage
+                    sessionStorage.removeItem('activeCallOrderId');
+                    
+                    order = existingOrder;
+                } else {
+                    // Fallback if order not found
+                    order = Model.saveOrder();
+                }
+            } else {
+                // Regular new order
+                order = Model.saveOrder();
+            }
             
             // Check for errors
             if (!order) {
@@ -503,25 +536,29 @@ const Controller = {
             // Just ensure they're set
             if (!order.payment) {
                 order.payment = paymentAmount;
-                order.balance = paymentAmount - order.totals.total;
+                // Handle both totals.total and total properties
+                const orderTotal = order.totals?.total || order.total || totals.total;
+                order.balance = paymentAmount - orderTotal;
             }
             
-            // Ask if user wants to print kitchen ticket
-            Swal.fire({
-                title: 'Print Kitchen Ticket?',
-                text: 'Would you like to send this order to the kitchen?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Print KOT',
-                cancelButtonText: 'No, Skip',
-                confirmButtonColor: '#3b82f6',
-                cancelButtonColor: '#6b7280'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Print kitchen ticket
-                    this.printKitchenTicketForTakeaway(order);
-                }
-            });
+            // Ask if user wants to print kitchen ticket (only for new orders, not call orders)
+            if (!callOrderId) {
+                Swal.fire({
+                    title: 'Print Kitchen Ticket?',
+                    text: 'Would you like to send this order to the kitchen?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Print KOT',
+                    cancelButtonText: 'No, Skip',
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#6b7280'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Print kitchen ticket
+                        this.printKitchenTicketForTakeaway(order);
+                    }
+                });
+            }
             
             //  Generate receipt
             View.generateReceipt(order);
@@ -540,6 +577,9 @@ const Controller = {
             }, 500);
 
             // Clear cart, payment and refresh
+            Model.clearCart();
+            Model.clearPayment();
+            Model.currentOrder = null;
             this.renderCart();
             View.clearPaymentFields();
             View.showAlert('Order completed successfully! Stock updated.', 'success');
@@ -607,22 +647,34 @@ const Controller = {
             return;
         }
 
-        const currentUser = Model.currentUser;
-        const tempOrderId = 'KOT-' + Date.now();
+        // Create a takeaway order and save it to activeOrders
+        const result = Model.createTakeawayOrder();
+        if (!result.success) {
+            Swal.fire('Error', 'Failed to create order', 'error');
+            return;
+        }
+
+        // Add cart items to the order
+        cart.forEach((item) => {
+            // Cart stores 'productId', not 'id'
+            const productId = item.productId || item.id;
+            const addResult = Model.addItemToOrder(productId, item.quantity);
+            
+            if (!addResult.success) {
+                console.error(`Failed to add item ${item.name}:`, addResult.error);
+            }
+        });
+
+        // Update order totals
+        Model.updateOrderTotals();
         
-        // Create temporary order object for kitchen ticket
-        const kotOrder = {
-            orderId: tempOrderId,
-            orderType: 'TAKEAWAY',
-            tableNumber: null,
-            items: cart.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price,
-                subtotal: item.subtotal
-            })),
-            cashier: currentUser ? currentUser.username : 'Cashier'
-        };
+        // Get the updated order
+        const kotOrder = Model.getCurrentOrder();
+        
+        if (!kotOrder.items || kotOrder.items.length === 0) {
+            Swal.fire('Error', 'Failed to add items to order. Please try again.', 'error');
+            return;
+        }
         
         const kitchenTicketHTML = View.generateKitchenTicketHTML(kotOrder);
         
@@ -658,7 +710,11 @@ const Controller = {
         `);
         printWindow.document.close();
         
-        Swal.fire('Success', 'Kitchen ticket sent to printer!', 'success');
+        // Clear the cart after sending to kitchen
+        Model.clearCart();
+        this.renderCart();
+        
+        Swal.fire('Success', 'Kitchen ticket sent to printer! Order saved for later payment.', 'success');
     },
 
     // Show pending call orders (KOT orders sent to kitchen but not yet paid)
@@ -683,7 +739,7 @@ const Controller = {
                             <th style="padding: 10px; border-bottom: 2px solid #ddd;">Order ID</th>
                             <th style="padding: 10px; border-bottom: 2px solid #ddd;">Items</th>
                             <th style="padding: 10px; border-bottom: 2px solid #ddd;">Total</th>
-                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Action</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -697,10 +753,14 @@ const Controller = {
                     <td style="padding: 10px;">${order.orderId || order.id}</td>
                     <td style="padding: 10px;">${itemCount} items</td>
                     <td style="padding: 10px;">${Model.formatCurrency(total)}</td>
-                    <td style="padding: 10px;">
-                        <button onclick="Controller.loadCallOrderToCart('${order.orderId || order.id}')" 
+                    <td style="padding: 10px; display: flex; gap: 5px;">
+                        <button class="load-order-btn" data-order-id="${order.orderId || order.id}" 
                                 style="padding: 5px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">
                             Load
+                        </button>
+                        <button class="delete-order-btn" data-order-id="${order.orderId || order.id}" 
+                                style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Delete
                         </button>
                     </td>
                 </tr>
@@ -718,7 +778,26 @@ const Controller = {
             html: ordersHTML,
             width: '600px',
             showCloseButton: true,
-            showConfirmButton: false
+            showConfirmButton: false,
+            didOpen: () => {
+                // Add event listeners to all load buttons
+                const loadButtons = document.querySelectorAll('.load-order-btn');
+                loadButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const orderId = btn.getAttribute('data-order-id');
+                        Controller.loadCallOrderToCart(orderId);
+                    });
+                });
+                
+                // Add event listeners to all delete buttons
+                const deleteButtons = document.querySelectorAll('.delete-order-btn');
+                deleteButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const orderId = btn.getAttribute('data-order-id');
+                        Controller.deleteCallOrder(orderId);
+                    });
+                });
+            }
         });
     },
 
@@ -731,20 +810,31 @@ const Controller = {
             return;
         }
 
-        // Clear current cart
+        // Clear current cart first
         Model.clearCart();
         
         // Load order items into cart
         if (order.items && order.items.length > 0) {
-            order.items.forEach(item => {
-                Model.addToCart({
-                    id: item.productId || item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity
-                });
+            order.items.forEach((item) => {
+                // addToCart expects just the productId
+                const productId = item.productId;
+                
+                // Add the item once
+                const added = Model.addToCart(productId);
+                
+                if (added) {
+                    // Then update the quantity to match the order
+                    if (item.quantity > 1) {
+                        Model.updateCartQuantity(productId, item.quantity);
+                    }
+                } else {
+                    console.error(`Failed to add product ${productId} to cart`);
+                }
             });
         }
+
+        // Store the order ID for later reference when completing payment
+        sessionStorage.setItem('activeCallOrderId', orderId);
 
         // Update display
         this.renderCart();
@@ -754,10 +844,41 @@ const Controller = {
         
         Swal.fire({
             title: 'Order Loaded',
-            text: 'Order loaded to cart. Customer can now make payment.',
+            text: `Order ${orderId} loaded to cart. Customer can now make payment.`,
             icon: 'success',
             timer: 2000,
             showConfirmButton: false
+        });
+    },
+
+    // Delete a call order
+    deleteCallOrder(orderId) {
+        Swal.fire({
+            title: 'Delete Order?',
+            text: `Are you sure you want to delete order ${orderId}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete it',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Remove from active orders
+                const orderIndex = Model.activeOrders.findIndex(o => (o.orderId || o.id) === orderId);
+                
+                if (orderIndex !== -1) {
+                    Model.activeOrders.splice(orderIndex, 1);
+                    Model.saveActiveOrders();
+                    
+                    Swal.fire('Deleted!', 'Order has been deleted.', 'success');
+                    
+                    // Refresh the call orders list
+                    this.showPendingCallOrders();
+                } else {
+                    Swal.fire('Error', 'Order not found', 'error');
+                }
+            }
         });
     },
 
@@ -780,8 +901,12 @@ const Controller = {
     viewOrder(orderId) {
         const order = Model.getOrderById(orderId);
         if (order) {
+            // Ensure order has proper structure for receipt generation
+            // The order should already have all needed properties from storage
             View.generateReceipt(order);
             View.showModal('receiptModal');
+        } else {
+            Swal.fire('Error', 'Order not found', 'error');
         }
     },
 

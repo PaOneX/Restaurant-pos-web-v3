@@ -315,14 +315,41 @@ const View = {
         
         if (!receiptContainer) return '';
 
+        // Handle different date formats
+        let dateStr, timeStr;
+        if (order.date && typeof order.date === 'object') {
+            dateStr = order.date.date;
+            timeStr = order.date.time;
+        } else if (order.createdAt) {
+            const date = new Date(order.createdAt);
+            dateStr = date.toLocaleDateString();
+            timeStr = date.toLocaleTimeString();
+        } else {
+            const now = new Date();
+            dateStr = now.toLocaleDateString();
+            timeStr = now.toLocaleTimeString();
+        }
+
+        // Handle different order ID formats
+        const orderId = order.orderId || order.id;
+        
+        // Handle cashier name
+        const cashier = order.cashier || order.user || 'Cashier';
+        
+        // Handle totals - support both formats
+        const subtotal = order.totals?.subtotal || order.subtotal || 0;
+        const serviceCharge = order.totals?.serviceCharge || order.serviceCharge || 0;
+        const discount = order.totals?.discount || order.discount || 0;
+        const total = order.totals?.total || order.total || 0;
+
         const receiptHTML = `
             <div class="receipt">
                 <div class="receipt-header">
-                    <h2>${settings.restaurantName}</h2>
-                    <p>Date: ${order.date.date}</p>
-                    <p>Time: ${order.date.time}</p>
-                    <p>Order #: ${order.id}</p>
-                    <p>Cashier: ${order.user}</p>
+                    <h2>${Model.getRestaurantName()}</h2>
+                    <p>Date: ${dateStr}</p>
+                    <p>Time: ${timeStr}</p>
+                    <p>Order #: ${orderId}</p>
+                    <p>Cashier: ${cashier}</p>
                 </div>
                 <hr>
                 <div class="receipt-items">
@@ -351,25 +378,25 @@ const View = {
                 <div class="receipt-totals">
                     <div class="total-row">
                         <span>Subtotal:</span>
-                        <span>${Model.formatCurrency(order.totals.subtotal)}</span>
+                        <span>${Model.formatCurrency(subtotal)}</span>
                     </div>
                     <div class="total-row">
                         <span>Service Charge (${settings.serviceChargeRate}%):</span>
-                        <span>${Model.formatCurrency(order.totals.serviceCharge)}</span>
+                        <span>${Model.formatCurrency(serviceCharge)}</span>
                     </div>
                     <div class="total-row">
                         <span>Discount (${settings.discount}%):</span>
-                        <span>-${Model.formatCurrency(order.totals.discount)}</span>
+                        <span>-${Model.formatCurrency(discount)}</span>
                     </div>
                     <div class="total-row grand-total">
                         <span>TOTAL:</span>
-                        <span>${Model.formatCurrency(order.totals.total)}</span>
+                        <span>${Model.formatCurrency(total)}</span>
                     </div>
-                    ${order.payment ? `
+                    ${order.payment || order.paymentAmount ? `
                     <hr>
                     <div class="total-row">
                         <span>Payment:</span>
-                        <span>${Model.formatCurrency(order.payment)}</span>
+                        <span>${Model.formatCurrency(order.payment || order.paymentAmount)}</span>
                     </div>
                     <div class="total-row">
                         <span>Change:</span>
@@ -647,13 +674,17 @@ const View = {
         if (userDisplay) {
             if (user) {
                 userDisplay.textContent = `${user.username} (${user.role})`;
+                userDisplay.style.display = 'inline';
                 if (loginBtn) loginBtn.style.display = 'none';
                 if (logoutBtn) logoutBtn.style.display = 'inline-flex';
             } else {
                 userDisplay.textContent = 'Guest';
+                userDisplay.style.display = 'inline';
                 if (loginBtn) loginBtn.style.display = 'inline-flex';
                 if (logoutBtn) logoutBtn.style.display = 'none';
             }
+        } else {
+            console.warn('currentUser element not found in DOM');
         }
         
         // Update navigation based on role
@@ -1424,19 +1455,17 @@ const View = {
                 <table class="receipt-table">
                     <thead>
                         <tr>
-                            <th>Item</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Total</th>
+                            <th style="text-align: left; width: 55%;">Item</th>
+                            <th style="text-align: center; width: 15%;">Qty</th>
+                            <th style="text-align: right; width: 30%;">Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${(order.items || []).map(item => `
                             <tr>
-                                <td>${Security.escapeHTML(item.name)}</td>
-                                <td>${item.quantity}</td>
-                                <td>${Model.formatCurrency(item.price)}</td>
-                                <td>${Model.formatCurrency(item.subtotal)}</td>
+                                <td style="text-align: left;">${Security.escapeHTML(item.name)}</td>
+                                <td style="text-align: center;">${item.quantity}</td>
+                                <td style="text-align: right;">${Model.formatCurrency(item.subtotal)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -1538,19 +1567,17 @@ const View = {
                 <table class="receipt-table">
                     <thead>
                         <tr>
-                            <th>Item</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Total</th>
+                            <th style="text-align: left; width: 55%;">Item</th>
+                            <th style="text-align: center; width: 15%;">Qty</th>
+                            <th style="text-align: right; width: 30%;">Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${(order.items || []).map(item => `
                             <tr>
-                                <td>${Security.escapeHTML(item.name)}</td>
-                                <td>${item.quantity}</td>
-                                <td>${Model.formatCurrency(item.price)}</td>
-                                <td>${Model.formatCurrency(item.subtotal)}</td>
+                                <td style="text-align: left;">${Security.escapeHTML(item.name)}</td>
+                                <td style="text-align: center;">${item.quantity}</td>
+                                <td style="text-align: right;">${Model.formatCurrency(item.subtotal)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
