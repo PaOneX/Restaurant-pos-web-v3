@@ -734,6 +734,27 @@ const View = {
                         </div>
                     </div>
                 </div>
+                <div class="order-type-breakdown">
+                    <h3><i class="fas fa-chart-pie"></i> Order Type Breakdown</h3>
+                    <div class="breakdown-grid">
+                        <div class="breakdown-item">
+                            <i class="fas fa-concierge-bell" style="color: #ec4899;"></i>
+                            <div>
+                                <h4>${summary.totalDiningOrders || 0}</h4>
+                                <p>Dining Orders</p>
+                                <small>${Model.formatCurrency(summary.totalDiningRevenue || 0)}</small>
+                            </div>
+                        </div>
+                        <div class="breakdown-item">
+                            <i class="fas fa-shopping-bag" style="color: #3b82f6;"></i>
+                            <div>
+                                <h4>${summary.totalTakeawayOrders || 0}</h4>
+                                <p>Takeaway Orders</p>
+                                <small>${Model.formatCurrency(summary.totalTakeawayRevenue || 0)}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="export-section">
                     <button class="btn btn-primary" onclick="Controller.exportSalesHistory()">
                         <i class="fab fa-whatsapp"></i> Export to WhatsApp

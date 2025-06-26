@@ -2290,6 +2290,66 @@ table tbody tr:hover {
     font-size: 0.9rem;
 }
 
+.order-type-breakdown {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.order-type-breakdown h3 {
+    color: var(--dark-color);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    border-left: 4px solid var(--primary-color);
+    transition: all 0.3s;
+}
+
+.breakdown-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.breakdown-item i {
+    font-size: 2.5rem;
+}
+
+.breakdown-item h4 {
+    font-size: 1.8rem;
+    color: var(--dark-color);
+    margin: 0 0 0.25rem 0;
+    font-weight: 700;
+}
+
+.breakdown-item p {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.breakdown-item small {
+    color: var(--success-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: block;
+    margin-top: 0.25rem;
+}
+
 .export-section {
     text-align: center;
     padding-top: 1rem;

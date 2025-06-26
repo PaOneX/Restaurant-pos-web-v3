@@ -797,12 +797,22 @@ const Model = {
       // Check if today's report already exists
       const existingReportIndex = monthRecord.dailyReports.findIndex(r => r.date === dateKey);
       
+      // Count dining vs takeaway orders
+      const diningOrders = dailyReport.orders.filter(o => o.orderType === 'DINING').length;
+      const takeawayOrders = dailyReport.orders.filter(o => o.orderType === 'TAKEAWAY' || !o.orderType).length;
+      const diningRevenue = dailyReport.orders.filter(o => o.orderType === 'DINING').reduce((sum, o) => sum + (o.total || 0), 0);
+      const takeawayRevenue = dailyReport.orders.filter(o => o.orderType === 'TAKEAWAY' || !o.orderType).reduce((sum, o) => sum + (o.total || 0), 0);
+
       const newDailyReport = {
         date: dateKey,
         dateFormatted: today.toLocaleDateString(),
         orders: dailyReport.orderCount,
         revenue: dailyReport.total,
         items: stats.totalItems,
+        diningOrders: diningOrders,
+        takeawayOrders: takeawayOrders,
+        diningRevenue: diningRevenue,
+        takeawayRevenue: takeawayRevenue,
         categoryStats: stats.categoryStats,
         productStats: stats.productStats,
         timestamp: Date.now()
@@ -899,6 +909,10 @@ const Model = {
     let totalOrders = 0;
     let totalRevenue = 0;
     let totalItems = 0;
+    let totalDiningOrders = 0;
+    let totalTakeawayOrders = 0;
+    let totalDiningRevenue = 0;
+    let totalTakeawayRevenue = 0;
     const categoryTotals = {};
     const productTotals = {};
     
@@ -909,6 +923,10 @@ const Model = {
       
       // Aggregate daily reports for detailed stats
       month.dailyReports.forEach(day => {
+        totalDiningOrders += day.diningOrders || 0;
+        totalTakeawayOrders += day.takeawayOrders || 0;
+        totalDiningRevenue += day.diningRevenue || 0;
+        totalTakeawayRevenue += day.takeawayRevenue || 0;
         // Category totals
         if (day.categoryStats) {
           Object.keys(day.categoryStats).forEach(category => {
@@ -953,6 +971,10 @@ const Model = {
       totalOrders,
       totalRevenue,
       totalItems,
+      totalDiningOrders,
+      totalTakeawayOrders,
+      totalDiningRevenue,
+      totalTakeawayRevenue,
       categoryTotals,
       productTotals,
       averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
