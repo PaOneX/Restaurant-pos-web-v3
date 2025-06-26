@@ -1993,6 +1993,12 @@ const Controller = {
             this.loadDiningPage();
             View.toggleDiningOrderPanels(false);
             
+            // Refresh orders page if it's currently active
+            const currentPage = document.querySelector('.nav-link.active');
+            if (currentPage && currentPage.textContent.includes('Orders')) {
+                this.loadOrders();
+            }
+            
             Swal.fire({
                 icon: 'success',
                 title: 'Order Closed!',

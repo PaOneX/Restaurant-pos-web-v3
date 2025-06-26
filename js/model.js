@@ -636,12 +636,21 @@ const Model = {
 
     const order = {
       id: this.orderCounter.toString(),
+      orderId: 'TK-' + this.orderCounter,
+      orderType: 'TAKEAWAY',
       items: [...this.cart],
       totals: totals,
+      subtotal: totals.subtotal,
+      serviceCharge: totals.serviceCharge,
+      discount: totals.discount,
+      total: totals.total,
       date: this.getCurrentDateTime(),
       user: this.currentUser ? this.currentUser.username : "Cashier",
+      cashier: this.currentUser ? this.currentUser.username : "Cashier",
       payment: paymentData.payment,
+      paymentAmount: paymentData.payment,
       balance: paymentData.balance,
+      createdAt: new Date().toISOString()
     };
 
     this.orders.push(order);
@@ -1620,7 +1629,7 @@ const Model = {
     this.currentOrder.status = "CLOSED";
     this.currentOrder.closedAt = new Date().toISOString();
     
-    // Add to orders history
+    // Add to orders history with proper structure
     this.orders.push({
       id: this.currentOrder.id,
       orderId: this.currentOrder.orderId,
@@ -1628,16 +1637,24 @@ const Model = {
       tableId: this.currentOrder.tableId,
       tableNumber: this.currentOrder.tableNumber,
       items: this.currentOrder.items,
+      totals: {
+        subtotal: this.currentOrder.subtotal,
+        serviceCharge: this.currentOrder.serviceCharge,
+        discount: this.currentOrder.discount,
+        total: this.currentOrder.total
+      },
       subtotal: this.currentOrder.subtotal,
       serviceCharge: this.currentOrder.serviceCharge,
       discount: this.currentOrder.discount,
       total: this.currentOrder.total,
+      payment: this.currentOrder.paymentAmount,
       paymentAmount: this.currentOrder.paymentAmount,
       balance: this.currentOrder.balance,
+      user: this.currentOrder.cashier,
       cashier: this.currentOrder.cashier,
       createdAt: this.currentOrder.createdAt,
       closedAt: this.currentOrder.closedAt,
-      date: new Date().toLocaleDateString()
+      date: this.getCurrentDateTime() // Use proper date structure with dateOnly field
     });
 
     // Free the table if dining
