@@ -1414,10 +1414,10 @@ const View = {
                 </div>
                 
                 <div class="receipt-info">
-                    <p><strong>Order ID:</strong> ${order.orderId}</p>
+                    <p><strong>Order #:</strong> ${order.orderId}</p>
                     <p><strong>Type:</strong> ${order.orderType}</p>
                     ${order.tableNumber ? `<p><strong>Table:</strong> ${order.tableNumber}</p>` : ''}
-                    <p><strong>Date:</strong> ${billTime}</p>
+                    <p><strong>Time:</strong> ${billTime}</p>
                     <p><strong>Cashier:</strong> ${order.cashier}</p>
                 </div>
                 
@@ -1465,6 +1465,50 @@ const View = {
                     <p><strong>*** TEMPORARY BILL ***</strong></p>
                     <p>This is not a payment receipt</p>
                     <p>Please wait for final bill</p>
+                </div>
+            </div>
+        `;
+    },
+
+    // Generate Kitchen Order Ticket (KOT) HTML
+    generateKitchenTicketHTML(order) {
+        const date = new Date();
+        const orderTime = date.toLocaleString();
+        
+        return `
+            <div class="receipt kitchen-ticket">
+                <div class="receipt-header">
+                    <h2>KITCHEN ORDER TICKET</h2>
+                    <h3 style="color: #ef4444; margin: 10px 0;">(KOT)</h3>
+                </div>
+                
+                <div class="receipt-info" style="border: 2px solid #333; padding: 10px; margin: 10px 0;">
+                    <p style="font-size: 18px;"><strong>Order #:</strong> <span style="font-size: 20px; font-weight: 700;">${order.orderId}</span></p>
+                    <p style="font-size: 16px;"><strong>Type:</strong> <span style="color: ${order.orderType === 'DINING' ? '#ec4899' : '#3b82f6'}; font-weight: 700;">${order.orderType}</span></p>
+                    ${order.tableNumber ? `<p style="font-size: 18px;"><strong>Table:</strong> <span style="font-size: 20px; font-weight: 700; color: #ef4444;">${order.tableNumber}</span></p>` : ''}
+                    <p><strong>Time:</strong> ${orderTime}</p>
+                </div>
+                
+                <table class="receipt-table" style="margin: 15px 0;">
+                    <thead>
+                        <tr style="background: #333; color: white;">
+                            <th style="padding: 12px; text-align: left; font-size: 16px;">ITEM</th>
+                            <th style="padding: 12px; text-align: center; font-size: 16px; width: 80px;">QTY</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(order.items || []).map(item => `
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 15px 10px; font-size: 15px; font-weight: 600;">${Security.escapeHTML(item.name)}</td>
+                                <td style="padding: 15px 10px; text-align: center; font-size: 18px; font-weight: 700; color: #ef4444;">${item.quantity}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="receipt-footer" style="margin-top: 20px; padding-top: 15px; border-top: 2px dashed #333;">
+                    <p style="font-size: 14px;"><strong>Total Items:</strong> ${order.items.reduce((sum, item) => sum + item.quantity, 0)}</p>
+                    <p style="font-size: 16px; margin-top: 15px; text-align: center; font-weight: 700;">*** KITCHEN COPY ***</p>
                 </div>
             </div>
         `;

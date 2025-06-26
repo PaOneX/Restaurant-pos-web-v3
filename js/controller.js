@@ -506,6 +506,23 @@ const Controller = {
                 order.balance = paymentAmount - order.totals.total;
             }
             
+            // Ask if user wants to print kitchen ticket
+            Swal.fire({
+                title: 'Print Kitchen Ticket?',
+                text: 'Would you like to send this order to the kitchen?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Print KOT',
+                cancelButtonText: 'No, Skip',
+                confirmButtonColor: '#3b82f6',
+                cancelButtonColor: '#6b7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Print kitchen ticket
+                    this.printKitchenTicketForTakeaway(order);
+                }
+            });
+            
             //  Generate receipt
             View.generateReceipt(order);
             
@@ -533,6 +550,215 @@ const Controller = {
             console.error('Error in printBill:', error);
             View.showAlert('Error processing order: ' + error.message, 'error');
         }
+    },
+
+    // Print Kitchen Ticket for Takeaway Order
+    printKitchenTicketForTakeaway(order) {
+        // Convert takeaway order to format expected by kitchen ticket
+        const kotOrder = {
+            orderId: order.id || 'TAK-' + order.id,
+            orderType: 'TAKEAWAY',
+            tableNumber: null,
+            items: order.items,
+            cashier: order.user
+        };
+        
+        const kitchenTicketHTML = View.generateKitchenTicketHTML(kotOrder);
+        
+        // Open print window
+        const printWindow = window.open('', '', 'height=600,width=400');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Kitchen Order Ticket - ${kotOrder.orderId}</title>
+                <style>
+                    body { 
+                        font-family: 'Courier New', monospace; 
+                        padding: 10px;
+                        margin: 0;
+                    }
+                    .receipt { margin: 0; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 8px; text-align: left; }
+                    @media print {
+                        body { margin: 0; padding: 10px; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${kitchenTicketHTML}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    },
+
+    // Print Kitchen Ticket from Current Cart (Takeaway)
+    printKitchenTicketFromCart() {
+        const cart = Model.getCart();
+        
+        if (cart.length === 0) {
+            Swal.fire('Error', 'Cart is empty!', 'error');
+            return;
+        }
+
+        const currentUser = Model.currentUser;
+        const tempOrderId = 'KOT-' + Date.now();
+        
+        // Create temporary order object for kitchen ticket
+        const kotOrder = {
+            orderId: tempOrderId,
+            orderType: 'TAKEAWAY',
+            tableNumber: null,
+            items: cart.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+                subtotal: item.subtotal
+            })),
+            cashier: currentUser ? currentUser.username : 'Cashier'
+        };
+        
+        const kitchenTicketHTML = View.generateKitchenTicketHTML(kotOrder);
+        
+        // Open print window
+        const printWindow = window.open('', '', 'height=600,width=400');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Kitchen Order Ticket - ${kotOrder.orderId}</title>
+                <style>
+                    body { 
+                        font-family: 'Courier New', monospace; 
+                        padding: 10px;
+                        margin: 0;
+                    }
+                    .receipt { margin: 0; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 8px; text-align: left; }
+                    @media print {
+                        body { margin: 0; padding: 10px; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${kitchenTicketHTML}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        
+        Swal.fire('Success', 'Kitchen ticket sent to printer!', 'success');
+    },
+
+    // Show pending call orders (KOT orders sent to kitchen but not yet paid)
+    showPendingCallOrders() {
+        const activeOrders = Model.activeOrders || [];
+        const callOrders = activeOrders.filter(order => 
+            order.orderType === 'TAKEAWAY' && 
+            (order.status === 'OPEN' || order.status === 'TEMP_BILL')
+        );
+
+        if (callOrders.length === 0) {
+            Swal.fire('Info', 'No pending call orders', 'info');
+            return;
+        }
+
+        // Create HTML for call orders list
+        let ordersHTML = `
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f3f4f6; text-align: left;">
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Order ID</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Items</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Total</th>
+                            <th style="padding: 10px; border-bottom: 2px solid #ddd;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        callOrders.forEach(order => {
+            const itemCount = order.items ? order.items.length : 0;
+            const total = order.total || order.totals?.total || 0;
+            ordersHTML += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">${order.orderId || order.id}</td>
+                    <td style="padding: 10px;">${itemCount} items</td>
+                    <td style="padding: 10px;">${Model.formatCurrency(total)}</td>
+                    <td style="padding: 10px;">
+                        <button onclick="Controller.loadCallOrderToCart('${order.orderId || order.id}')" 
+                                style="padding: 5px 10px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Load
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        ordersHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        Swal.fire({
+            title: 'Pending Call Orders',
+            html: ordersHTML,
+            width: '600px',
+            showCloseButton: true,
+            showConfirmButton: false
+        });
+    },
+
+    // Load a call order into the cart for payment
+    loadCallOrderToCart(orderId) {
+        const order = Model.activeOrders.find(o => (o.orderId || o.id) === orderId);
+        
+        if (!order) {
+            Swal.fire('Error', 'Order not found', 'error');
+            return;
+        }
+
+        // Clear current cart
+        Model.clearCart();
+        
+        // Load order items into cart
+        if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+                Model.addToCart({
+                    id: item.productId || item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                });
+            });
+        }
+
+        // Update display
+        this.renderCart();
+        
+        // Close the modal
+        Swal.close();
+        
+        Swal.fire({
+            title: 'Order Loaded',
+            text: 'Order loaded to cart. Customer can now make payment.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+        });
     },
 
     // Close receipt modal
@@ -1440,6 +1666,58 @@ const Controller = {
         } else {
             Swal.fire('Error', result.error, 'error');
         }
+    },
+
+    // Print Kitchen Order Ticket
+    printKitchenTicket(order) {
+        if (!order) {
+            order = Model.getCurrentOrder();
+        }
+        
+        if (!order) {
+            Swal.fire('Error', 'No order to print', 'error');
+            return;
+        }
+
+        if (!order.items || order.items.length === 0) {
+            Swal.fire('Error', 'Order is empty', 'error');
+            return;
+        }
+
+        const kitchenTicketHTML = View.generateKitchenTicketHTML(order);
+        
+        // Open print window
+        const printWindow = window.open('', '', 'height=600,width=400');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Kitchen Order Ticket - ${order.orderId}</title>
+                <style>
+                    body { 
+                        font-family: 'Courier New', monospace; 
+                        padding: 10px;
+                        margin: 0;
+                    }
+                    .receipt { margin: 0; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { padding: 8px; text-align: left; }
+                    @media print {
+                        body { margin: 0; padding: 10px; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${kitchenTicketHTML}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        // Uncomment to auto-close: window.close();
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     },
 
     // Close Temp Bill Modal

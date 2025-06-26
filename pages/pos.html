@@ -113,12 +113,18 @@
             </div>
         </div>
 
-        <div class="cart-actions">
-            <button class="btn btn-clear" onclick="Controller.clearCart()">
-                <i class="fas fa-trash"></i> Clear
+        <div class="cart-actions" style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn btn-info" onclick="Controller.printKitchenTicketFromCart()" style="width: 100%;">
+                <i class="fas fa-concierge-bell"></i> Send to Kitchen (KOT)
             </button>
-            <button class="btn btn-print" onclick="Controller.printBill()">
+            <button class="btn btn-secondary" onclick="Controller.showPendingCallOrders()" style="width: 100%;">
+                <i class="fas fa-list"></i> View Call Orders
+            </button>
+            <button class="btn btn-print" onclick="Controller.printBill()" style="width: 100%;">
                 <i class="fas fa-print"></i> Print Bill
+            </button>
+            <button class="btn btn-clear" onclick="Controller.clearCart()" style="width: 100%;">
+                <i class="fas fa-trash"></i> Clear
             </button>
         </div>
     </div>

@@ -132,8 +132,11 @@
 
         <!-- Action Buttons -->
         <div class="order-actions" id="orderActions" style="display: none;">
+            <button class="btn btn-info btn-block" onclick="Controller.printKitchenTicket()" style="margin-bottom: 15px;">
+                <i class="fas fa-print"></i> Send to Kitchen (KOT)
+            </button>
             <button class="btn btn-warning btn-block" onclick="Controller.generateTempBill()" style="margin-bottom: 15px;">
-                <i class="fas fa-file-alt"></i> Print Temp Bill (KOT)
+                <i class="fas fa-file-alt"></i> Print Temp Bill
             </button>
             <button class="btn btn-success btn-block" onclick="Controller.showPaymentModal()" style="margin-bottom: 15px;">
                 <i class="fas fa-money-bill-wave"></i> Process Payment
