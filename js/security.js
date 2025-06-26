@@ -156,11 +156,7 @@ const Security = {
     validateSettingsData(data) {
         const errors = [];
         
-        if (!data.name || data.name.trim().length === 0) {
-            errors.push('Restaurant name is required');
-        } else if (data.name.length > 100) {
-            errors.push('Restaurant name too long');
-        }
+        // Restaurant name is now controlled by global constant, no validation needed
         
         const serviceCharge = this.validateNumber(data.serviceCharge, 0, 100);
         if (serviceCharge === null) {
@@ -181,7 +177,6 @@ const Security = {
             valid: errors.length === 0,
             errors: errors,
             sanitizedData: {
-                name: this.sanitizeInput(data.name, 100),
                 serviceCharge: serviceCharge,
                 discount: discount,
                 phone: this.sanitizeInput(data.phone, 20)

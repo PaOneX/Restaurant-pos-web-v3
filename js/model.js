@@ -4,7 +4,7 @@
 
 // ⚠️ DEVELOPER ONLY - Change restaurant name here
 // This constant controls the restaurant name throughout the entire application
-const RESTAURANT_NAME = "My Restaurant";
+const RESTAURANT_NAME = "Spark";
 
 const Model = {
   // Default data
