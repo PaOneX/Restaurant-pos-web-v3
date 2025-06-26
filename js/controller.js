@@ -523,11 +523,32 @@ const Controller = {
                 const existingOrder = Model.activeOrders.find(o => (o.orderId || o.id) === callOrderId);
                 
                 if (existingOrder) {
-                    // Update order with payment details
+                    // Update order with payment details and proper date structure
                     existingOrder.paymentAmount = paymentAmount;
+                    existingOrder.payment = paymentAmount;
                     existingOrder.balance = paymentAmount - totals.total;
                     existingOrder.status = 'PAID';
                     existingOrder.finalBillPrintedAt = new Date().toISOString();
+                    
+                    // Add proper date structure if missing
+                    if (!existingOrder.date) {
+                        existingOrder.date = Model.getCurrentDateTime();
+                    }
+                    
+                    // Add totals structure if missing
+                    if (!existingOrder.totals) {
+                        existingOrder.totals = {
+                            subtotal: existingOrder.subtotal || 0,
+                            serviceCharge: existingOrder.serviceCharge || 0,
+                            discount: existingOrder.discount || 0,
+                            total: existingOrder.total || totals.total
+                        };
+                    }
+                    
+                    // Add user/cashier info
+                    if (!existingOrder.user) {
+                        existingOrder.user = existingOrder.cashier || (Model.currentUser ? Model.currentUser.username : "Cashier");
+                    }
                     
                     // Move to completed orders
                     Model.orders.push(existingOrder);

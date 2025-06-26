@@ -782,7 +782,8 @@ const Model = {
 
   // 2ï¸âƒ£4ï¸âƒ£ Get Order by ID
   getOrderById(orderId) {
-    return this.orders.find((o) => o.id === orderId);
+    // Handle both numeric id and string orderId (DIN-123, TK-456, etc.)
+    return this.orders.find((o) => o.id === orderId || o.orderId === orderId || o.id == orderId);
   },
 
   // 2ï¸âƒ£5ï¸âƒ£ Delete Order
