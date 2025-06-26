@@ -616,6 +616,46 @@ table tbody tr:hover {
     color: var(--text-color);
 }
 
+.product-card .stock.stock-ok {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.product-card .stock.stock-low {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.product-card .stock.stock-out {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.product-card.out-of-stock {
+    opacity: 0.6;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.product-card.out-of-stock:hover {
+    transform: none;
+    border-color: var(--border-color);
+}
+
+.out-of-stock-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
 /* ========================================
    11. CART
 ======================================== */
