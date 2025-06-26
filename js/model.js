@@ -12,7 +12,7 @@ const Model = {
   cart: [],
   orders: [],
   settings: {
-    serviceChargeRate: 0,
+    serviceChargeRate: 10,
     discount: 0,
     currency: "Rs.",
     adminPhone: "",
@@ -33,6 +33,14 @@ const Model = {
     Beverages: ["Hot Drinks", "Cold Drinks", "Juices"],
     Meat: ["Chicken", "Beef", "Seafood"],
   },
+
+  // ========================================
+  // NEW: TABLE & ORDER MANAGEMENT
+  // ========================================
+  
+  tables: [],  // Array of table objects
+  currentOrder: null,  // Currently active order (dining or takeaway)
+  activeOrders: [],  // Orders in progress (OPEN, TEMP_BILL)
 
   // ========================================
   // 1. STORAGE FUNCTIONS
@@ -239,6 +247,14 @@ const Model = {
     }
     
     return filtered;
+  },
+
+  // Filter products by main category only
+  filterProductsByMainCategory(mainCategory) {
+    if (!mainCategory || mainCategory === "All") {
+      return this.products;
+    }
+    return this.products.filter((p) => p.mainCategory === mainCategory);
   },
 
   // 2️⃣8️⃣ Sort by Price
@@ -646,7 +662,7 @@ const Model = {
   // Calculate daily total
   calculateDailyTotal() {
     const total = this.orders.reduce(
-      (sum, order) => sum + order.totals.total,
+      (sum, order) => sum + (order.totals?.total || order.total || 0),
       0,
     );
     const orderCount = this.orders.length;
@@ -665,7 +681,7 @@ const Model = {
     let totalAmount = 0;
 
     this.orders.forEach((order) => {
-      totalAmount += order.totals.total;
+      totalAmount += order.totals?.total || order.total || 0;
 
       order.items.forEach((item) => {
         // Get the product to find its category
@@ -1115,5 +1131,421 @@ const Model = {
 
   clearPayment() {
     this.paymentAmount = 0;
+  },
+
+  // ========================================
+  // TABLE MANAGEMENT FUNCTIONS
+  // ========================================
+
+  // Load tables from storage or create default
+  loadTables() {
+    const tables = this.getFromLocalStorage("tables");
+    if (tables) {
+      this.tables = tables;
+    } else {
+      // Create default 10 tables
+      this.tables = [];
+      for (let i = 1; i <= 10; i++) {
+        this.tables.push({
+          id: i,
+          number: i,
+          status: "FREE", // FREE, OCCUPIED
+          orderId: null
+        });
+      }
+      this.saveToLocalStorage("tables", this.tables);
+    }
+    return this.tables;
+  },
+
+  // Get all tables
+  getAllTables() {
+    return this.tables;
+  },
+
+  // Get table by ID
+  getTableById(tableId) {
+    return this.tables.find(t => t.id === parseInt(tableId));
+  },
+
+  // Book/Open table
+  bookTable(tableId, orderId) {
+    const table = this.getTableById(tableId);
+    if (!table) {
+      return { success: false, error: "Table not found" };
+    }
+    if (table.status === "OCCUPIED") {
+      return { success: false, error: "Table is already occupied" };
+    }
+
+    table.status = "OCCUPIED";
+    table.orderId = orderId;
+    this.saveToLocalStorage("tables", this.tables);
+    return { success: true };
+  },
+
+  // Close/Free table
+  closeTable(tableId) {
+    const table = this.getTableById(tableId);
+    if (!table) {
+      return { success: false, error: "Table not found" };
+    }
+
+    table.status = "FREE";
+    table.orderId = null;
+    this.saveToLocalStorage("tables", this.tables);
+    return { success: true };
+  },
+
+  // Add more tables
+  addTable() {
+    const newId = this.tables.length > 0 ? Math.max(...this.tables.map(t => t.id)) + 1 : 1;
+    const newNumber = this.tables.length > 0 ? Math.max(...this.tables.map(t => t.number)) + 1 : 1;
+    this.tables.push({
+      id: newId,
+      number: newNumber,
+      status: "FREE",
+      orderId: null
+    });
+    this.saveToLocalStorage("tables", this.tables);
+    return { success: true, tableId: newId };
+  },
+
+  // Delete table
+  deleteTable(tableId) {
+    const table = this.getTableById(tableId);
+    if (!table) {
+      return { success: false, error: "Table not found" };
+    }
+    if (table.status === "OCCUPIED") {
+      return { success: false, error: "Cannot delete occupied table" };
+    }
+
+    this.tables = this.tables.filter(t => t.id !== parseInt(tableId));
+    this.saveToLocalStorage("tables", this.tables);
+    return { success: true };
+  },
+
+  // ========================================
+  // ENHANCED ORDER MANAGEMENT
+  // ========================================
+
+  // Load active orders from storage
+  loadActiveOrders() {
+    const activeOrders = this.getFromLocalStorage("activeOrders");
+    this.activeOrders = activeOrders || [];
+    return this.activeOrders;
+  },
+
+  // Save active orders
+  saveActiveOrders() {
+    this.saveToLocalStorage("activeOrders", this.activeOrders);
+  },
+
+  // Create new takeaway order
+  createTakeawayOrder() {
+    const newOrder = {
+      id: this.orderCounter++,
+      orderId: `TK-${this.orderCounter}`,
+      orderType: "TAKEAWAY",
+      tableId: null,
+      items: [],
+      status: "OPEN", // OPEN, TEMP_BILL, PAID, CLOSED
+      subtotal: 0,
+      serviceCharge: 0,
+      discount: 0,
+      total: 0,
+      paymentAmount: 0,
+      balance: 0,
+      cashier: this.currentUser ? this.currentUser.name : "Unknown",
+      createdAt: new Date().toISOString(),
+      tempBillPrintedAt: null,
+      finalBillPrintedAt: null
+    };
+
+    this.currentOrder = newOrder;
+    this.activeOrders.push(newOrder);
+    this.saveActiveOrders();
+    this.saveToLocalStorage("orderCounter", this.orderCounter);
+    
+    return { success: true, order: newOrder };
+  },
+
+  // Create new dining order
+  createDiningOrder(tableId) {
+    const table = this.getTableById(tableId);
+    if (!table) {
+      return { success: false, error: "Table not found" };
+    }
+    if (table.status === "OCCUPIED") {
+      return { success: false, error: "Table is already occupied" };
+    }
+
+    const newOrder = {
+      id: this.orderCounter++,
+      orderId: `DIN-${this.orderCounter}`,
+      orderType: "DINING",
+      tableId: parseInt(tableId),
+      tableNumber: table.number,
+      items: [],
+      status: "OPEN",
+      subtotal: 0,
+      serviceCharge: 0,
+      discount: 0,
+      total: 0,
+      paymentAmount: 0,
+      balance: 0,
+      cashier: this.currentUser ? this.currentUser.name : "Unknown",
+      createdAt: new Date().toISOString(),
+      tempBillPrintedAt: null,
+      finalBillPrintedAt: null
+    };
+
+    this.currentOrder = newOrder;
+    this.activeOrders.push(newOrder);
+    
+    // Book the table
+    this.bookTable(tableId, newOrder.orderId);
+    
+    this.saveActiveOrders();
+    this.saveToLocalStorage("orderCounter", this.orderCounter);
+    
+    return { success: true, order: newOrder };
+  },
+
+  // Select/Load an existing order
+  selectOrder(orderId) {
+    const order = this.activeOrders.find(o => o.orderId === orderId || o.id === orderId);
+    if (!order) {
+      return { success: false, error: "Order not found" };
+    }
+
+    this.currentOrder = order;
+    return { success: true, order: order };
+  },
+
+  // Get current order
+  getCurrentOrder() {
+    return this.currentOrder;
+  },
+
+  // Get all active orders
+  getActiveOrders() {
+    return this.activeOrders;
+  },
+
+  // Add item to current order
+  addItemToOrder(productId, quantity = 1) {
+    if (!this.currentOrder) {
+      return { success: false, error: "No active order. Please create an order first." };
+    }
+
+    const product = this.getProductById(productId);
+    if (!product) {
+      return { success: false, error: "Product not found" };
+    }
+
+    // Check if item already in order
+    const existingItem = this.currentOrder.items.find(item => item.productId === productId);
+    
+    if (existingItem) {
+      existingItem.quantity += quantity;
+      existingItem.subtotal = existingItem.quantity * existingItem.price;
+    } else {
+      this.currentOrder.items.push({
+        productId: product.id,
+        name: product.name,
+        price: parseFloat(product.price),
+        quantity: quantity,
+        subtotal: parseFloat(product.price) * quantity
+      });
+    }
+
+    this.updateOrderTotals();
+    this.saveActiveOrders();
+    
+    return { success: true, order: this.currentOrder };
+  },
+
+  // Update item quantity in current order
+  updateItemQuantity(productId, quantity) {
+    if (!this.currentOrder) {
+      return { success: false, error: "No active order" };
+    }
+
+    const item = this.currentOrder.items.find(i => i.productId === productId);
+    if (!item) {
+      return { success: false, error: "Item not found in order" };
+    }
+
+    if (quantity <= 0) {
+      return this.removeItemFromOrder(productId);
+    }
+
+    item.quantity = quantity;
+    item.subtotal = item.quantity * item.price;
+    
+    this.updateOrderTotals();
+    this.saveActiveOrders();
+    
+    return { success: true, order: this.currentOrder };
+  },
+
+  // Remove item from current order
+  removeItemFromOrder(productId) {
+    if (!this.currentOrder) {
+      return { success: false, error: "No active order" };
+    }
+
+    const index = this.currentOrder.items.findIndex(i => i.productId === productId);
+    if (index === -1) {
+      return { success: false, error: "Item not found in order" };
+    }
+
+    this.currentOrder.items.splice(index, 1);
+    this.updateOrderTotals();
+    this.saveActiveOrders();
+    
+    return { success: true, order: this.currentOrder };
+  },
+
+  // Update order totals
+  updateOrderTotals() {
+    if (!this.currentOrder) return;
+
+    // Calculate subtotal
+    this.currentOrder.subtotal = this.currentOrder.items.reduce((sum, item) => {
+      return sum + (item.subtotal || 0);
+    }, 0);
+
+    // Calculate service charge (fixed at 10% for dining orders)
+    const serviceRate = this.currentOrder.orderType === 'DINING' ? 10 : parseFloat(this.settings.serviceChargeRate) || 0;
+    this.currentOrder.serviceCharge = (this.currentOrder.subtotal * serviceRate) / 100;
+
+    // Calculate discount
+    const discountRate = parseFloat(this.settings.discount) || 0;
+    const beforeDiscount = this.currentOrder.subtotal + this.currentOrder.serviceCharge;
+    this.currentOrder.discount = (beforeDiscount * discountRate) / 100;
+
+    // Calculate total
+    this.currentOrder.total = beforeDiscount - this.currentOrder.discount;
+  },
+
+  // ========================================
+  // BILL MANAGEMENT
+  // ========================================
+
+  // Generate temporary bill
+  generateTemporaryBill() {
+    if (!this.currentOrder) {
+      return { success: false, error: "No active order" };
+    }
+
+    if (this.currentOrder.items.length === 0) {
+      return { success: false, error: "Order is empty" };
+    }
+
+    this.currentOrder.status = "TEMP_BILL";
+    this.currentOrder.tempBillPrintedAt = new Date().toISOString();
+    this.saveActiveOrders();
+    
+    return { success: true, order: this.currentOrder };
+  },
+
+  // Process payment and generate final bill
+  processFinalBill(paymentAmount) {
+    if (!this.currentOrder) {
+      return { success: false, error: "No active order" };
+    }
+
+    if (this.currentOrder.items.length === 0) {
+      return { success: false, error: "Order is empty" };
+    }
+
+    const payment = parseFloat(paymentAmount) || 0;
+    const balance = payment - this.currentOrder.total;
+
+    if (balance < 0) {
+      return { success: false, error: "Insufficient payment amount" };
+    }
+
+    this.currentOrder.status = "PAID";
+    this.currentOrder.paymentAmount = payment;
+    this.currentOrder.balance = balance;
+    this.currentOrder.finalBillPrintedAt = new Date().toISOString();
+    this.saveActiveOrders();
+    
+    return { success: true, order: this.currentOrder, balance: balance };
+  },
+
+  // Close order (move to history)
+  closeCurrentOrder() {
+    if (!this.currentOrder) {
+      return { success: false, error: "No active order" };
+    }
+
+    if (this.currentOrder.status !== "PAID") {
+      return { success: false, error: "Order must be paid before closing" };
+    }
+
+    // Move to order history
+    this.currentOrder.status = "CLOSED";
+    this.currentOrder.closedAt = new Date().toISOString();
+    
+    // Add to orders history
+    this.orders.push({
+      id: this.currentOrder.id,
+      orderId: this.currentOrder.orderId,
+      orderType: this.currentOrder.orderType,
+      tableId: this.currentOrder.tableId,
+      tableNumber: this.currentOrder.tableNumber,
+      items: this.currentOrder.items,
+      subtotal: this.currentOrder.subtotal,
+      serviceCharge: this.currentOrder.serviceCharge,
+      discount: this.currentOrder.discount,
+      total: this.currentOrder.total,
+      paymentAmount: this.currentOrder.paymentAmount,
+      balance: this.currentOrder.balance,
+      cashier: this.currentOrder.cashier,
+      createdAt: this.currentOrder.createdAt,
+      closedAt: this.currentOrder.closedAt,
+      date: new Date().toLocaleDateString()
+    });
+
+    // Free the table if dining
+    if (this.currentOrder.orderType === "DINING") {
+      this.closeTable(this.currentOrder.tableId);
+    }
+
+    // Remove from active orders
+    this.activeOrders = this.activeOrders.filter(o => o.orderId !== this.currentOrder.orderId);
+    
+    // Clear current order
+    this.currentOrder = null;
+
+    this.saveToLocalStorage("orders", this.orders);
+    this.saveActiveOrders();
+    
+    return { success: true };
+  },
+
+  // Clear current order (cancel)
+  cancelCurrentOrder() {
+    if (!this.currentOrder) {
+      return { success: false, error: "No active order" };
+    }
+
+    // Free table if dining
+    if (this.currentOrder.orderType === "DINING") {
+      this.closeTable(this.currentOrder.tableId);
+    }
+
+    // Remove from active orders
+    this.activeOrders = this.activeOrders.filter(o => o.orderId !== this.currentOrder.orderId);
+    
+    this.currentOrder = null;
+    this.saveActiveOrders();
+    
+    return { success: true };
   },
 };

@@ -394,23 +394,33 @@ const View = {
         // Sort by date (newest first)
         const sortedOrders = [...orders].reverse();
 
-        tbody.innerHTML = sortedOrders.map(order => `
+        tbody.innerHTML = sortedOrders.map(order => {
+            // Handle both old and new order structures
+            const orderId = order.orderId || order.id;
+            const dateDisplay = order.date?.full || order.date || order.createdAt || 'N/A';
+            const itemsCount = order.items?.length || 0;
+            const total = order.total || order.totals?.total || 0;
+            const cashier = order.cashier || order.user || 'Unknown';
+            const orderType = order.orderType ? `<span class="badge badge-sm badge-${order.orderType.toLowerCase()}">${order.orderType}</span>` : '';
+            
+            return `
             <tr>
-                <td data-label="Order ID">${order.id}</td>
-                <td data-label="Date & Time">${order.date.full}</td>
-                <td data-label="Items">${order.items.length}</td>
-                <td data-label="Total">${Model.formatCurrency(order.totals.total)}</td>
-                <td data-label="Cashier">${order.user}</td>
+                <td data-label="Order ID">${Security.escapeHTML(orderId)} ${orderType}</td>
+                <td data-label="Date & Time">${Security.escapeHTML(dateDisplay)}</td>
+                <td data-label="Items">${itemsCount}</td>
+                <td data-label="Total">${Model.formatCurrency(total)}</td>
+                <td data-label="Cashier">${Security.escapeHTML(cashier)}</td>
                 <td data-label="Actions">
-                    <button class="btn btn-sm btn-view" onclick="Controller.viewOrder('${order.id}')">
+                    <button class="btn btn-sm btn-view" onclick="Controller.viewOrder('${orderId}')">
                         <i class="fas fa-eye"></i> View
                     </button>
-                    <button class="btn btn-sm btn-delete" onclick="Controller.deleteOrder('${order.id}')">
+                    <button class="btn btn-sm btn-delete" onclick="Controller.deleteOrder('${orderId}')">
                         <i class="fas fa-trash"></i> Delete
                     </button>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
     },
 
     // ========================================
@@ -1121,4 +1131,477 @@ const View = {
             timer: 2000,
             showConfirmButton: false
         });
-    }};
+    },
+
+    // ========================================
+    // DINING & TABLE MANAGEMENT VIEW FUNCTIONS
+    // ========================================
+
+    // Render Tables Grid
+    renderTablesGrid(tables, currentOrderTableId = null) {
+        const grid = document.getElementById('tablesGrid');
+        if (!grid) return;
+
+        if (!tables || tables.length === 0) {
+            grid.innerHTML = '<p class="text-center">No tables available</p>';
+            return;
+        }
+
+        grid.innerHTML = tables.map(table => {
+            const statusClass = table.status.toLowerCase();
+            const isSelected = currentOrderTableId === table.id;
+            
+            return `
+                <div class="table-card ${statusClass} ${isSelected ? 'selected' : ''}" 
+                     onclick="Controller.handleTableClick(${table.id})">
+                    <div class="table-number">
+                        <i class="fas fa-chair"></i> ${table.number}
+                    </div>
+                    <span class="table-status ${statusClass}">${table.status}</span>
+                    ${table.orderId ? `<div class="table-order-id">${table.orderId}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+    },
+
+    // Render Active Orders Summary
+    renderActiveOrdersSummary(activeOrders) {
+        const container = document.getElementById('activeOrdersSummary');
+        if (!container) return;
+
+        const openOrders = activeOrders.filter(o => o.status === 'OPEN').length;
+        const tempBills = activeOrders.filter(o => o.status === 'TEMP_BILL').length;
+        const totalRevenue = activeOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+        container.innerHTML = `
+            <h3><i class="fas fa-clipboard-list"></i> Active Orders</h3>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div class="stat-value">${openOrders}</div>
+                    <div class="stat-label">Open Orders</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${tempBills}</div>
+                    <div class="stat-label">Temp Bills</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${Model.formatCurrency(totalRevenue)}</div>
+                    <div class="stat-label">Total Value</div>
+                </div>
+            </div>
+            ${activeOrders.length > 0 ? `
+                <button class="btn btn-secondary btn-sm" style="margin-top: 10px;" 
+                        onclick="Controller.showActiveOrdersModal()">
+                    <i class="fas fa-list"></i> View All Orders
+                </button>
+            ` : ''}
+        `;
+    },
+
+    // Render Current Order Info
+    renderCurrentOrderInfo(order) {
+        const container = document.getElementById('currentOrderInfo');
+        if (!container) return;
+
+        if (!order) {
+            container.innerHTML = `
+                <div class="no-order-selected">
+                    <i class="fas fa-clipboard-list fa-3x"></i>
+                    <p>Select a table to start an order</p>
+                </div>
+            `;
+            return;
+        }
+
+        const createdDate = new Date(order.createdAt);
+        const statusBadge = {
+            'OPEN': '<span class="badge badge-primary">Open</span>',
+            'TEMP_BILL': '<span class="badge badge-warning">Temp Bill Printed</span>',
+            'PAID': '<span class="badge badge-success">Paid</span>',
+            'CLOSED': '<span class="badge badge-secondary">Closed</span>'
+        };
+
+        container.innerHTML = `
+            <div class="order-info-header">
+                <h3><i class="fas fa-receipt"></i> ${order.orderId}</h3>
+                <span class="order-badge ${order.orderType.toLowerCase()}">${order.orderType}</span>
+            </div>
+            <div class="order-meta">
+                ${order.tableNumber ? `
+                    <div class="order-meta-item">
+                        <span class="order-meta-label">Table:</span>
+                        <span class="order-meta-value">Table ${order.tableNumber}</span>
+                    </div>
+                ` : ''}
+                <div class="order-meta-item">
+                    <span class="order-meta-label">Status:</span>
+                    <span class="order-meta-value">${statusBadge[order.status] || order.status}</span>
+                </div>
+                <div class="order-meta-item">
+                    <span class="order-meta-label">Cashier:</span>
+                    <span class="order-meta-value">${order.cashier}</span>
+                </div>
+                <div class="order-meta-item">
+                    <span class="order-meta-label">Time:</span>
+                    <span class="order-meta-value">${createdDate.toLocaleTimeString()}</span>
+                </div>
+            </div>
+        `;
+    },
+
+    // Render Dining Products Grid
+    renderDiningProductsGrid(products) {
+        const grid = document.getElementById('diningProductsGrid');
+        if (!grid) return;
+
+        if (products.length === 0) {
+            grid.innerHTML = '<p class="text-center">No products available</p>';
+            return;
+        }
+
+        grid.innerHTML = products.map(product => `
+            <div class="product-card-small" onclick="Controller.addItemToDiningOrder('${product.id}')">
+                <div class="product-name">${Security.escapeHTML(product.name)}</div>
+                <div class="product-price">${Model.formatCurrency(product.price)}</div>
+            </div>
+        `).join('');
+    },
+
+    // Render Dining Category Filters
+    renderDiningCategoryFilters(selectedMainCategory = 'All') {
+        const container = document.getElementById('diningCategoryFilters');
+        if (!container) return;
+
+        const mainCategories = Model.getMainCategories();
+        container.innerHTML = mainCategories.map(cat => `
+            <button class="category-btn ${cat === selectedMainCategory ? 'active' : ''}" 
+                    onclick="Controller.filterDiningByCategory('${cat}')">
+                <span>${cat}</span>
+            </button>
+        `).join('');
+    },
+
+    // Render Order Items (for dining order)
+    renderDiningOrderItems(order) {
+        const container = document.getElementById('diningOrderItems');
+        if (!container) return;
+
+        if (!order || !order.items || order.items.length === 0) {
+            container.innerHTML = '<p class="text-center" style="color: #999; padding: 20px;">No items added yet</p>';
+            return;
+        }
+
+        container.innerHTML = order.items.map(item => `
+            <div class="order-item">
+                <div class="order-item-info">
+                    <div class="order-item-name">${Security.escapeHTML(item.name)}</div>
+                    <div class="order-item-price">${Model.formatCurrency(item.price)} × ${item.quantity}</div>
+                </div>
+                <div class="order-item-controls">
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick="Controller.updateDiningItemQty('${item.productId}', ${item.quantity - 1})">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="qty-display">${item.quantity}</span>
+                        <button class="qty-btn" onclick="Controller.updateDiningItemQty('${item.productId}', ${item.quantity + 1})">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <button class="remove-item-btn" onclick="Controller.removeDiningItem('${item.productId}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    // Update Dining Order Summary
+    updateDiningOrderSummary(order) {
+        if (!order) {
+            document.getElementById('diningSubtotal').textContent = Model.formatCurrency(0);
+            document.getElementById('diningServiceCharge').textContent = Model.formatCurrency(0);
+            document.getElementById('diningDiscount').textContent = Model.formatCurrency(0);
+            document.getElementById('diningTotal').textContent = Model.formatCurrency(0);
+            return;
+        }
+
+        document.getElementById('diningSubtotal').textContent = Model.formatCurrency(order.subtotal || 0);
+        document.getElementById('diningServiceCharge').textContent = Model.formatCurrency(order.serviceCharge || 0);
+        document.getElementById('diningDiscount').textContent = Model.formatCurrency(order.discount || 0);
+        document.getElementById('diningTotal').textContent = Model.formatCurrency(order.total || 0);
+    },
+
+    // Show/Hide Dining Order Panels
+    toggleDiningOrderPanels(show) {
+        const panels = ['productSelectionSection', 'orderItemsPanel', 'orderSummary', 'orderActions'];
+        
+        panels.forEach(panelId => {
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                panel.style.display = show ? 'block' : 'none';
+            }
+        });
+    },
+
+    // Generate Temporary Bill HTML
+    generateTempBillHTML(order) {
+        const date = new Date();
+        const billTime = date.toLocaleString();
+        
+        return `
+            <div class="receipt">
+                <div class="receipt-header">
+                    <h2>${RESTAURANT_NAME}</h2>
+                    <p>TEMPORARY BILL (KOT)</p>
+                    <p>Kitchen Order Ticket</p>
+                </div>
+                
+                <div class="receipt-info">
+                    <p><strong>Order ID:</strong> ${order.orderId}</p>
+                    <p><strong>Type:</strong> ${order.orderType}</p>
+                    ${order.tableNumber ? `<p><strong>Table:</strong> ${order.tableNumber}</p>` : ''}
+                    <p><strong>Date:</strong> ${billTime}</p>
+                    <p><strong>Cashier:</strong> ${order.cashier}</p>
+                </div>
+                
+                <table class="receipt-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map(item => `
+                            <tr>
+                                <td>${Security.escapeHTML(item.name)}</td>
+                                <td>${item.quantity}</td>
+                                <td>${Model.formatCurrency(item.price)}</td>
+                                <td>${Model.formatCurrency(item.subtotal)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="receipt-total">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span>${Model.formatCurrency(order.subtotal)}</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Service Charge:</span>
+                        <span>${Model.formatCurrency(order.serviceCharge)}</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Discount:</span>
+                        <span>${Model.formatCurrency(order.discount)}</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>TOTAL:</span>
+                        <span>${Model.formatCurrency(order.total)}</span>
+                    </div>
+                </div>
+                
+                <div class="receipt-footer">
+                    <p><strong>*** TEMPORARY BILL ***</strong></p>
+                    <p>This is not a payment receipt</p>
+                    <p>Please wait for final bill</p>
+                </div>
+            </div>
+        `;
+    },
+
+    // Generate Final Bill HTML
+    generateFinalBillHTML(order) {
+        const date = new Date();
+        const billTime = date.toLocaleString();
+        
+        return `
+            <div class="receipt">
+                <div class="receipt-header">
+                    <h2>${RESTAURANT_NAME}</h2>
+                    <p>FINAL BILL</p>
+                    <p>Tax Invoice</p>
+                </div>
+                
+                <div class="receipt-info">
+                    <p><strong>Order ID:</strong> ${order.orderId}</p>
+                    <p><strong>Type:</strong> ${order.orderType}</p>
+                    ${order.tableNumber ? `<p><strong>Table:</strong> ${order.tableNumber}</p>` : ''}
+                    <p><strong>Date:</strong> ${billTime}</p>
+                    <p><strong>Cashier:</strong> ${order.cashier}</p>
+                </div>
+                
+                <table class="receipt-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map(item => `
+                            <tr>
+                                <td>${Security.escapeHTML(item.name)}</td>
+                                <td>${item.quantity}</td>
+                                <td>${Model.formatCurrency(item.price)}</td>
+                                <td>${Model.formatCurrency(item.subtotal)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="receipt-total">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span>${Model.formatCurrency(order.subtotal)}</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Service Charge:</span>
+                        <span>${Model.formatCurrency(order.serviceCharge)}</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Discount:</span>
+                        <span>${Model.formatCurrency(order.discount)}</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>TOTAL:</span>
+                        <span>${Model.formatCurrency(order.total)}</span>
+                    </div>
+                    <div class="total-row payment">
+                        <span>Payment:</span>
+                        <span>${Model.formatCurrency(order.paymentAmount)}</span>
+                    </div>
+                    <div class="total-row change">
+                        <span>Change:</span>
+                        <span>${Model.formatCurrency(order.balance)}</span>
+                    </div>
+                </div>
+                
+                <div class="receipt-footer">
+                    <p><strong>*** PAID ***</strong></p>
+                    <p>Thank you for your visit!</p>
+                    <p>Please visit again</p>
+                </div>
+            </div>
+        `;
+    },
+
+    // Show Temp Bill Modal
+    showTempBillModal(html) {
+        const modal = document.getElementById('tempBillModal');
+        const content = document.getElementById('tempBillContent');
+        if (modal && content) {
+            content.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+    },
+
+    // Close Temp Bill Modal
+    closeTempBillModal() {
+        const modal = document.getElementById('tempBillModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    },
+
+    // Show Payment Modal
+    showPaymentModal(total) {
+        const modal = document.getElementById('paymentModal');
+        const totalSpan = document.getElementById('paymentTotal');
+        const input = document.getElementById('paymentAmount');
+        
+        if (modal && totalSpan && input) {
+            totalSpan.textContent = Model.formatCurrency(total);
+            input.value = '';
+            document.getElementById('paymentBalanceDiv').style.display = 'none';
+            document.getElementById('paymentInsufficientDiv').style.display = 'none';
+            document.getElementById('confirmPaymentBtn').disabled = false;
+            modal.style.display = 'flex';
+            
+            // Focus input
+            setTimeout(() => input.focus(), 100);
+            
+            // Add input listener for real-time balance calculation
+            input.addEventListener('input', function() {
+                const payment = parseFloat(this.value) || 0;
+                const balance = payment - total;
+                
+                if (payment > 0) {
+                    if (balance >= 0) {
+                        document.getElementById('paymentBalance').textContent = Model.formatCurrency(balance);
+                        document.getElementById('paymentBalanceDiv').style.display = 'block';
+                        document.getElementById('paymentInsufficientDiv').style.display = 'none';
+                        document.getElementById('confirmPaymentBtn').disabled = false;
+                    } else {
+                        document.getElementById('paymentBalanceDiv').style.display = 'none';
+                        document.getElementById('paymentInsufficientDiv').style.display = 'block';
+                        document.getElementById('confirmPaymentBtn').disabled = true;
+                    }
+                }
+            });
+        }
+    },
+
+    // Close Payment Modal
+    closePaymentModal() {
+        const modal = document.getElementById('paymentModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    },
+
+    // Render Active Orders List in Modal
+    renderActiveOrdersList(activeOrders) {
+        const container = document.getElementById('activeOrdersList');
+        if (!container) return;
+
+        if (!activeOrders || activeOrders.length === 0) {
+            container.innerHTML = '<p class="text-center" style="padding: 40px; color: #999;">No active orders</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="orders-grid">
+                ${activeOrders.map(order => {
+                    const createdDate = new Date(order.createdAt);
+                    const statusClass = order.status.toLowerCase().replace('_', '-');
+                    
+                    return `
+                        <div class="active-order-card ${statusClass}" onclick="Controller.selectActiveOrder('${order.orderId}')">
+                            <div class="order-card-header">
+                                <h4>${order.orderId}</h4>
+                                <span class="order-type-badge ${order.orderType.toLowerCase()}">${order.orderType}</span>
+                            </div>
+                            ${order.tableNumber ? `<p><strong>Table:</strong> ${order.tableNumber}</p>` : ''}
+                            <p><strong>Items:</strong> ${order.items.length}</p>
+                            <p><strong>Total:</strong> ${Model.formatCurrency(order.total)}</p>
+                            <p><strong>Status:</strong> <span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></p>
+                            <p class="order-time"><i class="fas fa-clock"></i> ${createdDate.toLocaleTimeString()}</p>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    // Show Active Orders Modal
+    showActiveOrdersModal() {
+        const modal = document.getElementById('activeOrdersModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    },
+
+    // Close Active Orders Modal
+    closeActiveOrdersModal() {
+        const modal = document.getElementById('activeOrdersModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+};

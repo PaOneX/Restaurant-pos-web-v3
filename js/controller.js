@@ -10,7 +10,7 @@ const Controller = {
 
     //  Initialize System
     initSystem() {
-        console.log('ðŸš€ Initializing Restaurant POS System...');
+        console.log('🚀 Initializing Restaurant POS System...');
         
         // Load all data from storage
         Model.loadProductsFromStorage();
@@ -20,6 +20,8 @@ const Controller = {
         Model.loadCurrentUser();
         Model.loadCategoryHierarchy();
         Model.loadSalesHistory(); // Load sales history
+        Model.loadTables(); // Load tables
+        Model.loadActiveOrders(); // Load active orders
         
         // Check for daily reset
         const report = Model.checkDailyReset();
@@ -32,7 +34,7 @@ const Controller = {
         // Setup event listeners
         this.setupEventListeners();
 
-        console.log(' System initialized successfully');
+        console.log('✅ System initialized successfully');
     },
 
     // Setup event listeners
@@ -1103,6 +1105,10 @@ const Controller = {
                         this.setupPOSPageListeners();
                         this.updateRestaurantNameInHeader();
                         break;
+                    case 'dining':
+                        this.loadDiningPage();
+                        this.updateRestaurantNameInHeader();
+                        break;
                     case 'orders':
                         this.loadOrders();
                         this.updateRestaurantNameInHeader();
@@ -1133,6 +1139,7 @@ const Controller = {
         // Define page permissions
         const permissions = {
             'pos': ['admin', 'cashier', null], // null means guest can access
+            'dining': ['admin', 'cashier', null], // Dining page access
             'products': ['admin'],
             'orders': ['admin'],
             'settings': ['admin'],
@@ -1144,6 +1151,463 @@ const Controller = {
         
         const userRole = user ? user.role : null;
         return allowedRoles.includes(userRole);
+    },
+
+    // ========================================
+    // DINING & TABLE MANAGEMENT CONTROLLERS
+    // ========================================
+
+    // Load Dining Page
+    loadDiningPage() {
+        Model.loadTables();
+        Model.loadActiveOrders();
+        
+        const tables = Model.getAllTables();
+        const activeOrders = Model.getActiveOrders();
+        const currentOrder = Model.getCurrentOrder();
+        
+        View.renderTablesGrid(tables, currentOrder ? currentOrder.tableId : null);
+        View.renderActiveOrdersSummary(activeOrders);
+        View.renderCurrentOrderInfo(currentOrder);
+        
+        if (currentOrder) {
+            this.showDiningOrderPanels(currentOrder);
+        }
+    },
+
+    // Refresh Tables
+    refreshTables() {
+        this.loadDiningPage();
+    },
+
+    // Add new table
+    addNewTable() {
+        Swal.fire({
+            title: 'Add New Table',
+            text: 'Are you sure you want to add a new table?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Add Table'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const response = Model.addTable();
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Table Added!',
+                        text: `Table ${response.tableId} has been created`,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    this.loadDiningPage();
+                }
+            }
+        });
+    },
+
+    // Show delete table modal
+    showDeleteTableModal() {
+        const tables = Model.getAllTables();
+        const freeTables = tables.filter(t => t.status === 'FREE');
+        
+        if (freeTables.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Free Tables',
+                text: 'All tables are occupied. Free a table first before deleting.'
+            });
+            return;
+        }
+
+        const tableOptions = freeTables.reduce((obj, table) => {
+            obj[table.id] = `Table ${table.number}`;
+            return obj;
+        }, {});
+
+        Swal.fire({
+            title: 'Delete Table',
+            text: 'Select a table to delete',
+            input: 'select',
+            inputOptions: tableOptions,
+            inputPlaceholder: 'Select a table',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Delete',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Please select a table!'
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.deleteTable(result.value);
+            }
+        });
+    },
+
+    // Delete table
+    deleteTable(tableId) {
+        const response = Model.deleteTable(tableId);
+        if (response.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: 'Table has been deleted.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            this.loadDiningPage();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.error
+            });
+        }
+    },
+
+    // Handle Table Click
+    handleTableClick(tableId) {
+        const table = Model.getTableById(tableId);
+        if (!table) return;
+
+        // If table is occupied, load the order
+        if (table.status === 'OCCUPIED' && table.orderId) {
+            const result = Model.selectOrder(table.orderId);
+            if (result.success) {
+                this.showDiningOrderPanels(result.order);
+                View.renderTablesGrid(Model.getAllTables(), tableId);
+            }
+        } else {
+            // Table is free, create new order
+            Swal.fire({
+                title: `Open Table ${table.number}?`,
+                text: 'Start a new dining order for this table',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Open Table',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const orderResult = Model.createDiningOrder(tableId);
+                    if (orderResult.success) {
+                        this.showDiningOrderPanels(orderResult.order);
+                        View.renderTablesGrid(Model.getAllTables(), tableId);
+                        View.renderActiveOrdersSummary(Model.getActiveOrders());
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Table Opened!',
+                            text: `Table ${table.number} is now open. Start adding items.`,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire('Error', orderResult.error, 'error');
+                    }
+                }
+            });
+        }
+    },
+
+    // Show Dining Order Panels
+    showDiningOrderPanels(order) {
+        View.renderCurrentOrderInfo(order);
+        View.toggleDiningOrderPanels(true);
+        
+        // Load products
+        const products = Model.getAllProducts();
+        View.renderDiningProductsGrid(products);
+        View.renderDiningCategoryFilters();
+        
+        // Render order items and summary
+        View.renderDiningOrderItems(order);
+        View.updateDiningOrderSummary(order);
+    },
+
+    // Filter Dining Products by Category
+    filterDiningByCategory(category) {
+        let products;
+        if (category === 'All') {
+            products = Model.getAllProducts();
+        } else {
+            products = Model.filterProductsByMainCategory(category);
+        }
+        View.renderDiningProductsGrid(products);
+        View.renderDiningCategoryFilters(category);
+    },
+
+    // Search Dining Products
+    searchDiningProducts() {
+        const searchInput = document.getElementById('diningProductSearch');
+        const searchTerm = searchInput ? searchInput.value : '';
+        
+        const products = Model.searchProducts(searchTerm);
+        View.renderDiningProductsGrid(products);
+    },
+
+    // Add Item to Dining Order
+    addItemToDiningOrder(productId) {
+        const result = Model.addItemToOrder(productId, 1);
+        
+        if (result.success) {
+            const order = Model.getCurrentOrder();
+            View.renderDiningOrderItems(order);
+            View.updateDiningOrderSummary(order);
+            
+            // Play success sound or animation
+            this.showQuickFeedback('Item added!');
+        } else {
+            Swal.fire('Error', result.error, 'error');
+        }
+    },
+
+    // Update Dining Item Quantity
+    updateDiningItemQty(productId, newQty) {
+        const result = Model.updateItemQuantity(productId, newQty);
+        
+        if (result.success) {
+            const order = Model.getCurrentOrder();
+            View.renderDiningOrderItems(order);
+            View.updateDiningOrderSummary(order);
+        } else {
+            Swal.fire('Error', result.error, 'error');
+        }
+    },
+
+    // Remove Dining Item
+    removeDiningItem(productId) {
+        Swal.fire({
+            title: 'Remove Item?',
+            text: 'Are you sure you want to remove this item?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Remove',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const removeResult = Model.removeItemFromOrder(productId);
+                if (removeResult.success) {
+                    const order = Model.getCurrentOrder();
+                    View.renderDiningOrderItems(order);
+                    View.updateDiningOrderSummary(order);
+                }
+            }
+        });
+    },
+
+    // Generate Temporary Bill
+    generateTempBill() {
+        const order = Model.getCurrentOrder();
+        if (!order) {
+            Swal.fire('Error', 'No active order', 'error');
+            return;
+        }
+
+        if (order.items.length === 0) {
+            Swal.fire('Error', 'Order is empty. Please add items first.', 'error');
+            return;
+        }
+
+        const result = Model.generateTemporaryBill();
+        if (result.success) {
+            const billHTML = View.generateTempBillHTML(result.order);
+            View.showTempBillModal(billHTML);
+            
+            // Update order info
+            View.renderCurrentOrderInfo(result.order);
+            View.renderActiveOrdersSummary(Model.getActiveOrders());
+        } else {
+            Swal.fire('Error', result.error, 'error');
+        }
+    },
+
+    // Close Temp Bill Modal
+    closeTempBill() {
+        View.closeTempBillModal();
+    },
+
+    // Show Payment Modal
+    showPaymentModal() {
+        const order = Model.getCurrentOrder();
+        if (!order) {
+            Swal.fire('Error', 'No active order', 'error');
+            return;
+        }
+
+        if (order.items.length === 0) {
+            Swal.fire('Error', 'Order is empty', 'error');
+            return;
+        }
+
+        View.showPaymentModal(order.total);
+    },
+
+    // Close Payment Modal
+    closePaymentModal() {
+        View.closePaymentModal();
+    },
+
+    // Process Payment
+    processPayment() {
+        const paymentInput = document.getElementById('paymentAmount');
+        const paymentAmount = parseFloat(paymentInput.value) || 0;
+        
+        const result = Model.processFinalBill(paymentAmount);
+        
+        if (result.success) {
+            View.closePaymentModal();
+            
+            // Show final bill
+            const billHTML = View.generateFinalBillHTML(result.order);
+            const receiptContent = document.getElementById('receiptContent');
+            const receiptModal = document.getElementById('receiptModal');
+            
+            if (receiptContent && receiptModal) {
+                receiptContent.innerHTML = billHTML;
+                receiptModal.style.display = 'flex';
+            }
+            
+            // Update UI
+            View.renderCurrentOrderInfo(result.order);
+            View.renderActiveOrdersSummary(Model.getActiveOrders());
+            
+            // Ask to close order
+            setTimeout(() => {
+                Swal.fire({
+                    title: 'Payment Successful!',
+                    text: 'Close this order and free the table?',
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Close Order',
+                    cancelButtonText: 'Keep Open'
+                }).then((closeResult) => {
+                    if (closeResult.isConfirmed) {
+                        this.closeOrder();
+                    }
+                });
+            }, 500);
+            
+        } else {
+            Swal.fire('Error', result.error, 'error');
+        }
+    },
+
+    // Close Order
+    closeOrder() {
+        const result = Model.closeCurrentOrder();
+        
+        if (result.success) {
+            // Refresh the page
+            this.loadDiningPage();
+            View.toggleDiningOrderPanels(false);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Order Closed!',
+                text: 'Table is now free for new customers',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire('Error', result.error, 'error');
+        }
+    },
+
+    // Cancel Order
+    cancelOrder() {
+        const order = Model.getCurrentOrder();
+        if (!order) return;
+
+        Swal.fire({
+            title: 'Cancel Order?',
+            text: 'This will delete the order and free the table. This action cannot be undone!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Cancel Order',
+            cancelButtonText: 'No, Keep Order',
+            confirmButtonColor: '#dc2626'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const cancelResult = Model.cancelCurrentOrder();
+                if (cancelResult.success) {
+                    this.loadDiningPage();
+                    View.toggleDiningOrderPanels(false);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Order Cancelled',
+                        text: 'Order has been cancelled and table is freed',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            }
+        });
+    },
+
+    // Show Active Orders Modal
+    showActiveOrdersModal() {
+        const activeOrders = Model.getActiveOrders();
+        View.renderActiveOrdersList(activeOrders);
+        View.showActiveOrdersModal();
+    },
+
+    // Close Active Orders Modal
+    closeActiveOrdersModal() {
+        View.closeActiveOrdersModal();
+    },
+
+    // Select Active Order from Modal
+    selectActiveOrder(orderId) {
+        const result = Model.selectOrder(orderId);
+        if (result.success) {
+            View.closeActiveOrdersModal();
+            this.showDiningOrderPanels(result.order);
+            View.renderTablesGrid(Model.getAllTables(), result.order.tableId);
+        }
+    },
+
+    // ========================================
+    // TAKEAWAY ORDER MANAGEMENT
+    // ========================================
+
+    // Create Takeaway Order (from POS page)
+    createTakeawayOrder() {
+        const result = Model.createTakeawayOrder();
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Takeaway Order Created!',
+                text: `Order ID: ${result.order.orderId}`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+            
+            // You can redirect to a takeaway-specific view if needed
+            // Or continue using the existing POS interface
+        } else {
+            Swal.fire('Error', result.error, 'error');
+        }
+    },
+
+    // Show Quick Feedback (for better UX)
+    showQuickFeedback(message) {
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1000,
+            timerProgressBar: true
+        });
+        
+        toast.fire({
+            icon: 'success',
+            title: message
+        });
     }
 };
 
