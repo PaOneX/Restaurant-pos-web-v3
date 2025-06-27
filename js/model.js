@@ -563,12 +563,10 @@ const Model = {
     });
 
     // Ensure settings are loaded and have valid numeric values
-    const serviceChargeRate = parseFloat(this.settings.serviceChargeRate) || 0;
     const discountRate = parseFloat(this.settings.discount) || 0;
 
-    // Apply service charge
-    const serviceChargeAmount = total * (serviceChargeRate / 100);
-    total += serviceChargeAmount;
+    // No service charge for takeaway orders (only for dining)
+    const serviceChargeAmount = 0;
 
     // Apply discount
     const discountAmount = total * (discountRate / 100);
@@ -1543,10 +1541,10 @@ const Model = {
       return sum + (item.subtotal || 0);
     }, 0);
 
-    // Calculate service charge (separate rate for dining vs takeaway)
+    // Calculate service charge (only for dining, not for takeaway)
     const serviceRate = this.currentOrder.orderType === 'DINING' 
       ? parseFloat(this.settings.diningServiceChargeRate) || 0 
-      : parseFloat(this.settings.serviceChargeRate) || 0;
+      : 0; // No service charge for takeaway
     this.currentOrder.serviceCharge = (this.currentOrder.subtotal * serviceRate) / 100;
 
     // Calculate discount
