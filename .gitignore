@@ -16,3 +16,6 @@ npm-debug.log*
 # Temporary files
 *.tmp
 .cache/
+
+# Documentation Files (exclude all markdown files)
+*.md
