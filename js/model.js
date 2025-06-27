@@ -26,6 +26,7 @@ const Model = {
   // Sales History (3 months retention)
   salesHistory: [], // Array of monthly reports
   maxHistoryMonths: 3,
+  dailyOrderPrefix: null, // Daily prefix for order IDs (YYYYMMDD)
 
   // Category hierarchy
   categoryHierarchy: {
@@ -593,6 +594,10 @@ const Model = {
     this.orders = orders || [];
     const counter = this.getFromLocalStorage("orderCounter");
     this.orderCounter = counter || 1;
+    // Load or create daily order prefix
+    const prefix = this.getFromLocalStorage("dailyOrderPrefix");
+    this.dailyOrderPrefix = prefix || new Date().toISOString().split('T')[0].replace(/-/g, '');
+    this.saveToLocalStorage("dailyOrderPrefix", this.dailyOrderPrefix);
     return this.orders;
   },
 
@@ -634,7 +639,7 @@ const Model = {
 
     const order = {
       id: this.orderCounter.toString(),
-      orderId: 'TK-' + this.orderCounter,
+      orderId: 'TK-' + this.dailyOrderPrefix + '-' + String(this.orderCounter).padStart(3, '0'),
       orderType: 'TAKEAWAY',
       items: [...this.cart],
       totals: totals,
@@ -824,9 +829,12 @@ const Model = {
     this.saveDailyReportToHistory(dailyReport);
     
     this.orders = [];
+    // Reset counter with daily prefix for unique IDs
     this.orderCounter = 1;
+    this.dailyOrderPrefix = new Date().toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD
     this.saveToLocalStorage("orders", this.orders);
     this.saveToLocalStorage("orderCounter", this.orderCounter);
+    this.saveToLocalStorage("dailyOrderPrefix", this.dailyOrderPrefix);
     return dailyReport;
   },
   
@@ -1345,7 +1353,7 @@ const Model = {
   createTakeawayOrder() {
     const newOrder = {
       id: this.orderCounter++,
-      orderId: `TK-${this.orderCounter}`,
+      orderId: `TK-${this.dailyOrderPrefix}-${String(this.orderCounter).padStart(3, '0')}`,
       orderType: "TAKEAWAY",
       tableId: null,
       items: [],
@@ -1382,7 +1390,7 @@ const Model = {
 
     const newOrder = {
       id: this.orderCounter++,
-      orderId: `DIN-${this.orderCounter}`,
+      orderId: `DIN-${this.dailyOrderPrefix}-${String(this.orderCounter).padStart(3, '0')}`,
       orderType: "DINING",
       tableId: parseInt(tableId),
       tableNumber: table.number,
@@ -1640,6 +1648,16 @@ const Model = {
     this.currentOrder.status = "CLOSED";
     this.currentOrder.closedAt = new Date().toISOString();
     
+    // Create date object from original createdAt to maintain order date consistency
+    const orderDate = new Date(this.currentOrder.createdAt);
+    const dateObj = {
+      date: orderDate.toLocaleDateString(),
+      time: orderDate.toLocaleTimeString(),
+      full: orderDate.toLocaleString(),
+      timestamp: this.currentOrder.createdAt,
+      dateOnly: this.currentOrder.createdAt.split('T')[0]
+    };
+    
     // Add to orders history with proper structure
     this.orders.push({
       id: this.currentOrder.id,
@@ -1665,7 +1683,7 @@ const Model = {
       cashier: this.currentOrder.cashier,
       createdAt: this.currentOrder.createdAt,
       closedAt: this.currentOrder.closedAt,
-      date: this.getCurrentDateTime() // Use proper date structure with dateOnly field
+      date: dateObj // Use date from when order was created, not closed
     });
 
     // Free the table if dining

@@ -4,6 +4,9 @@
 
 const Controller = {
 
+    // Store interval ID for cleanup
+    midnightCheckInterval: null,
+
     // ========================================
     // 1. SYSTEM INITIALIZATION
     // ========================================
@@ -41,8 +44,13 @@ const Controller = {
     
     // Setup automatic midnight reset checker
     setupMidnightChecker() {
+        // Clear any existing interval
+        if (this.midnightCheckInterval) {
+            clearInterval(this.midnightCheckInterval);
+        }
+        
         // Check every minute for midnight reset
-        setInterval(() => {
+        this.midnightCheckInterval = setInterval(() => {
             const report = Model.checkDailyReset();
             if (report && report.orderCount > 0) {
                 
@@ -64,6 +72,13 @@ const Controller = {
                 this.sendDailyReportToWhatsApp(report);
             }
         }, 60000); // Check every 60 seconds
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (this.midnightCheckInterval) {
+                clearInterval(this.midnightCheckInterval);
+            }
+        });
     },
 
     // Setup event listeners
@@ -455,8 +470,12 @@ const Controller = {
 
     //  Update Cart Quantity
     updateCartQuantity(productId, quantity) {
-        // Validate and sanitize quantity
-        const validQty = Security.validateCartQuantity(quantity);
+        // Validate and sanitize quantity with upper limit
+        let validQty = Security.validateCartQuantity(quantity);
+        if (validQty > 999) {
+            View.showAlert('Maximum quantity is 999 items', 'warning');
+            validQty = 999;
+        }
         Model.updateCartQuantity(productId, validQty);
         this.renderCart();
     },
@@ -622,7 +641,7 @@ const Controller = {
                     window.print();
                 } catch (printError) {
                     console.error('Print error:', printError);
-                    View.showAlert('Print function not available', 'error');
+                    View.showAlert('Could not open print dialog. Please try again.', 'warning');
                 }
             }, 500);
 
@@ -1478,11 +1497,25 @@ const Controller = {
     },
 
     // Clear localStorage for testing (useful for debugging)
-    clearAllData() {
-        if (View.showConfirm('This will delete all data including products, orders, and users. Continue?')) {
+    async clearAllData() {
+        const confirmed = await Swal.fire({
+            title: 'Clear All Data?',
+            html: '<strong>⚠️ WARNING!</strong><br>This will delete:<br>• All products<br>• All orders<br>• Sales history<br>• Settings<br>• User data<br><br>This action cannot be undone!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Clear Everything',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc2626',
+            input: 'checkbox',
+            inputPlaceholder: 'I understand this will delete all data'
+        });
+        
+        if (confirmed.isConfirmed && confirmed.value) {
             localStorage.clear();
-            View.showAlert('All data cleared. Page will reload.', 'success');
+            View.showAlert('All data cleared successfully! Page will reload.', 'success');
             setTimeout(() => location.reload(), 1500);
+        } else if (confirmed.isConfirmed) {
+            View.showAlert('Please confirm by checking the box', 'error');
         }
     },
 
@@ -1517,8 +1550,8 @@ const Controller = {
         if (!appRoot) return;
 
         try {
-            // Show loading state
-            appRoot.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            // Show loading state with spinner
+            appRoot.innerHTML = '<div class="loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 1rem;"><i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary-color);"></i><p style="color: var(--text-color); font-size: 1.1rem;">Loading...</p></div>';
 
             // Fetch page content
             const response = await fetch(`pages/${pageName}.html`);
@@ -1803,6 +1836,16 @@ const Controller = {
 
     // Update Dining Item Quantity
     updateDiningItemQty(productId, newQty) {
+        // Add upper limit validation
+        if (newQty > 999) {
+            View.showAlert('Maximum quantity is 999 items', 'warning');
+            newQty = 999;
+        }
+        if (newQty < 1) {
+            this.removeDiningItem(productId);
+            return;
+        }
+        
         const result = Model.updateItemQuantity(productId, newQty);
         
         if (result.success) {
