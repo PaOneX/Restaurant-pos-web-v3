@@ -672,7 +672,8 @@ const Model = {
     const today = new Date();
     const todayDateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
     
-    return this.orders.filter(order => {
+    // Get completed orders from today
+    const completedOrders = this.orders.filter(order => {
       if (!order.date) return false; // Exclude if no date
       
       // Priority 1: Use dateOnly if available (new format)
@@ -704,6 +705,18 @@ const Model = {
       // Fallback: exclude old orders without proper date
       return false;
     });
+    
+    // Get pending call orders (takeaway orders in activeOrders) from today
+    const pendingCallOrders = this.activeOrders.filter(order => {
+      if (order.orderType !== 'TAKEAWAY') return false; // Only include takeaway call orders
+      if (!order.createdAt) return false;
+      
+      const orderDateString = new Date(order.createdAt).toISOString().split('T')[0];
+      return orderDateString === todayDateString;
+    });
+    
+    // Combine both completed and pending orders
+    return [...completedOrders, ...pendingCallOrders];
   },
 
   // Calculate daily total
